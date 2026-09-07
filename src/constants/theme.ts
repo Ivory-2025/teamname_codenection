@@ -1,26 +1,39 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
 import '@/global.css';
-
 import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    // Canvas & Cards
+    background: '#F9F9FB',        // Primary screen background
+    card: '#FFFFFF',              // Elevated cards, sheets, modals
+    backgroundElement: '#F3F3F5', // Inputs, inactive chips, nested containers
+    backgroundSelected: '#111111',// Selected state / active pill background
+    
+    // Typography
+    text: '#0D0D0E',              // Main headings, titles, key numbers
+    textSecondary: '#636366',     // Subtitles, transit times, metadata[cite: 1]
+    textTertiary: '#AEAEB2',      // Placeholders, inactive tab icons
+    textInverse: '#FFFFFF',       // Text on dark buttons / active pills
+    
+    // Borders & Accents
+    border: '#E5E5EA',            // 0.5pt subtle hairline dividers & card borders
+    tint: '#111111',              // Onyx primary accent & active tab indicators
+    alert: '#C84037',             // Delays, attraction closures, SOS triggers[cite: 1]
+    rating: '#C29B38',            // Google star ratings & verified badges[cite: 1]
   },
   dark: {
-    text: '#ffffff',
     background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    card: '#1C1C1E',
+    backgroundElement: '#2C2C2E',
+    backgroundSelected: '#FFFFFF',
+    text: '#FFFFFF',
+    textSecondary: '#8E8E93',
+    textTertiary: '#48484A',
+    textInverse: '#000000',
+    border: '#38383A',
+    tint: '#FFFFFF',
+    alert: '#FF453A',
+    rating: '#FFD60A',
   },
 } as const;
 
@@ -28,13 +41,9 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
 export const Fonts = Platform.select({
   ios: {
-    /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
-    /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
-    /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: 'ui-rounded',
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
     mono: 'ui-monospace',
   },
   default: {
@@ -55,10 +64,23 @@ export const Spacing = {
   half: 2,
   one: 4,
   two: 8,
-  three: 16,
-  four: 24,
-  five: 32,
-  six: 64,
+  three: 12,
+  four: 16,
+  five: 24,
+  six: 32,
+} as const;
+
+export const Radius = {
+  button: 12,
+  input: 12,
+  card: 16,
+  sheet: 24,
+  pill: 9999,
+} as const;
+
+export const Border = {
+  hairline: 0.5,
+  accent: 3,
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
