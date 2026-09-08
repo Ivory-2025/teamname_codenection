@@ -3,19 +3,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
 import { useRef, useState } from 'react';
 import {
-    Animated,
-    Dimensions,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    PanResponder,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Animated,
+  Dimensions,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  PanResponder,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  TouchableWithoutFeedback,
+  View,
 } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -103,7 +104,7 @@ export default function FloatingTripDock() {
 
   return (
     <>
-      {/* Draggable Bubble */}
+      {/* Draggable Assistive Touch Bubble */}
       <Animated.View
         style={[
           styles.draggableBubble,
@@ -120,63 +121,66 @@ export default function FloatingTripDock() {
         </View>
       </Animated.View>
 
-      {/* 1. Quick Menu Modal */}
+      {/* 1. Quick Menu Modal (Chat & Radar Only) */}
       <Modal
         visible={activeModal === 'menu'}
         transparent
         animationType="fade"
         onRequestClose={() => setActiveModal(null)}
       >
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => setActiveModal(null)}
-          style={styles.modalBackdrop}
-        >
-          <View style={styles.liquidCard}>
-            <BlurView intensity={85} tint="light" style={StyleSheet.absoluteFill} />
-            <View style={styles.cardHeader}>
-              <View>
-                <Text style={styles.badgeCategory}>TRIP LIVE SPACE</Text>
-                <Text style={styles.cardTripTitle}>Autumn in Kansai</Text>
-              </View>
-              <View style={styles.avatarRow}>
-                {MEMBERS.map((m, idx) => (
-                  <Image
-                    key={m.id}
-                    source={{ uri: m.avatar }}
-                    style={[styles.memberAvatar, { marginLeft: idx > 0 ? -10 : 0 }]}
-                  />
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.menuDivider} />
-
-            <View style={styles.actionPillsContainer}>
-              <TouchableOpacity
-                style={styles.menuActionPill}
-                onPress={() => setActiveModal('chat')}
-              >
-                <View style={[styles.pillIconBadge, { backgroundColor: '#25D366' }]}>
-                  <Ionicons name="chatbubble-ellipses" size={20} color="#FFFFFF" />
+        <TouchableWithoutFeedback onPress={() => setActiveModal(null)}>
+          <View style={styles.modalBackdrop}>
+            <TouchableWithoutFeedback>
+              <View style={styles.liquidCard}>
+                <BlurView intensity={85} tint="light" style={StyleSheet.absoluteFill} />
+                <View style={styles.cardHeader}>
+                  <View>
+                    <Text style={styles.badgeCategory}>TRIP LIVE SPACE</Text>
+                    <Text style={styles.cardTripTitle}>Autumn in Kansai</Text>
+                  </View>
+                  <View style={styles.avatarRow}>
+                    {MEMBERS.map((m, idx) => (
+                      <Image
+                        key={m.id}
+                        source={{ uri: m.avatar }}
+                        style={[styles.memberAvatar, { marginLeft: idx > 0 ? -10 : 0 }]}
+                      />
+                    ))}
+                  </View>
                 </View>
-                <Text style={styles.pillLabel}>Group Chat</Text>
-                <Text style={styles.pillSub}>3 unread</Text>
-              </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.menuActionPill}
-                onPress={() => setActiveModal('radar')}
-              >
-                <View style={[styles.pillIconBadge, { backgroundColor: '#007AFF' }]}>
-                  <Ionicons name="navigate" size={20} color="#FFFFFF" />
+                <View style={styles.menuDivider} />
+
+                {/* 2 Equal Columns: Group Chat & Live Radar */}
+                <View style={styles.actionPillsContainer}>
+                  <TouchableOpacity
+                    style={styles.menuActionPill}
+                    activeOpacity={0.8}
+                    onPress={() => setActiveModal('chat')}
+                  >
+                    <View style={[styles.pillIconBadge, { backgroundColor: '#25D366' }]}>
+                      <Ionicons name="chatbubble-ellipses" size={20} color="#FFFFFF" />
+                    </View>
+                    <Text style={styles.pillLabel}>Group Chat</Text>
+                    <Text style={styles.pillSub}>3 unread</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.menuActionPill}
+                    activeOpacity={0.8}
+                    onPress={() => setActiveModal('radar')}
+                  >
+                    <View style={[styles.pillIconBadge, { backgroundColor: '#007AFF' }]}>
+                      <Ionicons name="navigate" size={20} color="#FFFFFF" />
+                    </View>
+                    <Text style={styles.pillLabel}>Live Radar</Text>
+                    <Text style={styles.pillSub}>4 active</Text>
+                  </TouchableOpacity>
                 </View>
-                <Text style={styles.pillLabel}>Live Radar</Text>
-                <Text style={styles.pillSub}>4 active</Text>
-              </TouchableOpacity>
-            </View>
+              </View>
+            </TouchableWithoutFeedback>
           </View>
-        </TouchableOpacity>
+        </TouchableWithoutFeedback>
       </Modal>
 
       {/* 2. WhatsApp-Style Group Chat */}

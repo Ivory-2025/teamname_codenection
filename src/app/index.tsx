@@ -1,5 +1,6 @@
 import { Border, Colors, Radius, Spacing } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import {
   Dimensions,
   Image,
@@ -36,19 +37,27 @@ const SAVED_TRIPS = [
     id: '1',
     title: 'Hokkaido Snow Drift',
     dates: 'Jan 2027 • 6 days',
-    image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=500&auto=format&fit=crop&q=80',
+    image:
+      'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=500&auto=format&fit=crop&q=80',
     placesCount: 14,
   },
   {
     id: '2',
     title: 'Seoul Cafe Hopping',
     dates: 'May 2027 • 4 days',
-    image: 'https://images.unsplash.com/photo-1538485399081-7191377e8241?w=500&auto=format&fit=crop&q=80',
+    image:
+      'https://images.unsplash.com/photo-1538485399081-7191377e8241?w=500&auto=format&fit=crop&q=80',
     placesCount: 22,
   },
 ];
 
 export default function HomeScreen() {
+  const router = useRouter();
+
+  const handleOpenItinerary = () => {
+    router.push('/itinerary-detail');
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
@@ -69,7 +78,11 @@ export default function HomeScreen() {
         {/* Featured / Active Trip Card (Wanderlog Style Hero) */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionHeader}>Upcoming Trip</Text>
-          <TouchableOpacity activeOpacity={0.9} style={styles.heroCard}>
+          <TouchableOpacity
+            activeOpacity={0.9}
+            style={styles.heroCard}
+            onPress={handleOpenItinerary}
+          >
             <Image source={{ uri: UPCOMING_TRIP.coverImage }} style={styles.heroImage} />
             <View style={styles.heroBadge}>
               <Text style={styles.heroBadgeText}>{UPCOMING_TRIP.countdown}</Text>
@@ -95,10 +108,14 @@ export default function HomeScreen() {
                   </View>
                 </View>
 
-                <View style={styles.viewPlanButton}>
+                <TouchableOpacity
+                  style={styles.viewPlanButton}
+                  onPress={handleOpenItinerary}
+                  activeOpacity={0.8}
+                >
                   <Text style={styles.viewPlanText}>Open Itinerary</Text>
                   <Ionicons name="arrow-forward" size={14} color="#FFFFFF" />
-                </View>
+                </TouchableOpacity>
               </View>
             </View>
           </TouchableOpacity>
@@ -108,7 +125,7 @@ export default function HomeScreen() {
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionHeader}>Day 1 Overview</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={handleOpenItinerary}>
               <Text style={styles.viewAllText}>Full Schedule</Text>
             </TouchableOpacity>
           </View>
@@ -141,7 +158,12 @@ export default function HomeScreen() {
             contentContainerStyle={styles.savedScroll}
           >
             {SAVED_TRIPS.map((trip) => (
-              <TouchableOpacity key={trip.id} activeOpacity={0.85} style={styles.savedCard}>
+              <TouchableOpacity
+                key={trip.id}
+                activeOpacity={0.85}
+                style={styles.savedCard}
+                onPress={handleOpenItinerary}
+              >
                 <Image source={{ uri: trip.image }} style={styles.savedImage} />
                 <View style={styles.savedOverlay}>
                   <Text style={styles.savedPlacesBadge}>{trip.placesCount} places</Text>
@@ -165,7 +187,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.light.background,
   },
   scrollContent: {
-    paddingBottom: 110, // Leaves room for the floating liquid tab bar
+    paddingBottom: 110,
   },
   headerRow: {
     flexDirection: 'row',

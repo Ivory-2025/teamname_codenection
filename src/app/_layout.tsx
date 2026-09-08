@@ -51,14 +51,8 @@ const MEMBERS = [
   { id: '4', name: 'Marcus', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100', dist: '1.2km away', status: 'On transit', battery: '60%' },
 ];
 
-const EXPENSES = [
-  { id: '1', title: 'Nishiki Market Street Food', paidBy: 'Kenji', amount: '¥8,400', yourShare: '+¥2,100', isPositive: false },
-  { id: '2', title: 'Shinkansen Bullet Train Tickets', paidBy: 'You', amount: '¥54,000', yourShare: '+¥40,500', isPositive: true },
-  { id: '3', title: 'Matcha Parfait Café', paidBy: 'Chloe', amount: '¥4,200', yourShare: '+¥1,050', isPositive: false },
-];
-
 function FloatingAssistiveDock() {
-  const [activeModal, setActiveModal] = useState<'menu' | 'chat' | 'radar' | 'split' | null>(null);
+  const [activeModal, setActiveModal] = useState<'menu' | 'chat' | 'radar' | null>(null);
   const [inputText, setInputText] = useState('');
   const [messages, setMessages] = useState([
     { id: '1', sender: 'Kenji', text: 'Hey guys, Nishiki Market is getting packed! Meet near the matcha soft serve stall?', time: '1:18 PM', isMe: false },
@@ -69,13 +63,11 @@ function FloatingAssistiveDock() {
   const scrollViewRef = useRef<ScrollView>(null);
   const keyboardHeight = useRef(new Animated.Value(0)).current;
 
-  // Track dynamic keyboard appearance to lift the input directly above it
   useEffect(() => {
     const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
     const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
 
     const onKeyboardShow = (e: KeyboardEvent) => {
-      // In iOS pageSheet modals, sheet top is offset ~50-60px from the screen top
       const offset = Platform.OS === 'ios' ? Math.max(e.endCoordinates.height - 40, 0) : 0;
       Animated.timing(keyboardHeight, {
         toValue: offset,
@@ -125,7 +117,6 @@ function FloatingAssistiveDock() {
       onPanResponderRelease: (_, gesture) => {
         pan.flattenOffset();
 
-        // Tap detected
         if (Math.abs(gesture.dx) < 5 && Math.abs(gesture.dy) < 5) {
           setActiveModal('menu');
           return;
@@ -190,7 +181,7 @@ function FloatingAssistiveDock() {
         </View>
       </Animated.View>
 
-      {/* 1. Frosted Liquid Quick Menu */}
+      {/* 1. Frosted Liquid Quick Menu (Split Bill Removed) */}
       <Modal
         visible={activeModal === 'menu'}
         transparent
@@ -222,10 +213,12 @@ function FloatingAssistiveDock() {
 
             <View style={styles.menuDivider} />
 
+            {/* 2 Balanced Columns: Group Chat & Live Radar */}
             <View style={styles.actionPillsContainer}>
               <TouchableOpacity
                 style={styles.menuActionPill}
                 onPress={() => setActiveModal('chat')}
+                activeOpacity={0.8}
               >
                 <View style={[styles.pillIconBadge, { backgroundColor: '#25D366' }]}>
                   <Ionicons name="chatbubble-ellipses" size={20} color="#FFFFFF" />
@@ -237,23 +230,13 @@ function FloatingAssistiveDock() {
               <TouchableOpacity
                 style={styles.menuActionPill}
                 onPress={() => setActiveModal('radar')}
+                activeOpacity={0.8}
               >
                 <View style={[styles.pillIconBadge, { backgroundColor: '#007AFF' }]}>
                   <Ionicons name="navigate" size={20} color="#FFFFFF" />
                 </View>
                 <Text style={styles.pillLabel}>Live Radar</Text>
                 <Text style={styles.pillSub}>4 active</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={styles.menuActionPill}
-                onPress={() => setActiveModal('split')}
-              >
-                <View style={[styles.pillIconBadge, { backgroundColor: '#F59E0B' }]}>
-                  <Ionicons name="receipt" size={20} color="#FFFFFF" />
-                </View>
-                <Text style={styles.pillLabel}>Split Bill</Text>
-                <Text style={styles.pillSub}>3 entries</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -268,7 +251,6 @@ function FloatingAssistiveDock() {
         onRequestClose={() => setActiveModal(null)}
       >
         <SafeAreaView style={styles.sheetContainer}>
-          {/* Fixed Header */}
           <View style={styles.chatHeader}>
             <TouchableOpacity onPress={() => setActiveModal('menu')} style={styles.chatBackBtn}>
               <Ionicons name="chevron-back" size={26} color="#007AFF" />
@@ -278,7 +260,6 @@ function FloatingAssistiveDock() {
               <Text style={styles.chatHeaderTitle}>Autumn in Kansai 🍁</Text>
               <Text style={styles.chatHeaderSub}>Kenji, Chloe, Marcus, You</Text>
             </View>
-            {/* Replaced Safari icon with aligned Navigate/Live Radar icon */}
             <TouchableOpacity
               onPress={() => setActiveModal('radar')}
               style={styles.radarHeaderBtn}
@@ -288,7 +269,6 @@ function FloatingAssistiveDock() {
             </TouchableOpacity>
           </View>
 
-          {/* Animated Container responding to Keyboard */}
           <Animated.View style={[styles.chatFlexBody, { paddingBottom: keyboardHeight }]}>
             <ScrollView
               ref={scrollViewRef}
@@ -322,7 +302,6 @@ function FloatingAssistiveDock() {
               ))}
             </ScrollView>
 
-            {/* Input Row stays securely docked above keyboard */}
             <View style={styles.inputContainer}>
               <TouchableOpacity style={styles.mediaBtn}>
                 <Ionicons name="add" size={24} color="#007AFF" />
@@ -342,7 +321,7 @@ function FloatingAssistiveDock() {
         </SafeAreaView>
       </Modal>
 
-      {/* 3. Live Radar / Tactical Map Screen */}
+      {/* 3. Live Radar Screen */}
       <Modal
         visible={activeModal === 'radar'}
         animationType="slide"
@@ -419,85 +398,6 @@ function FloatingAssistiveDock() {
               ))}
             </ScrollView>
           </View>
-        </SafeAreaView>
-      </Modal>
-
-      {/* 4. Split Bill Screen */}
-      <Modal
-        visible={activeModal === 'split'}
-        animationType="slide"
-        presentationStyle="pageSheet"
-        onRequestClose={() => setActiveModal(null)}
-      >
-        <SafeAreaView style={styles.sheetContainer}>
-          <View style={styles.chatHeader}>
-            <TouchableOpacity onPress={() => setActiveModal('menu')} style={styles.chatBackBtn}>
-              <Ionicons name="chevron-back" size={26} color="#007AFF" />
-            </TouchableOpacity>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.chatHeaderTitle}>Trip Expenses</Text>
-              <Text style={styles.chatHeaderSub}>Autumn in Kansai • 4 people</Text>
-            </View>
-            <TouchableOpacity style={styles.addExpenseBtn}>
-              <Ionicons name="add" size={18} color="#FFFFFF" />
-              <Text style={styles.addExpenseText}>Add</Text>
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.splitScrollContent}
-          >
-            <View style={styles.balanceCard}>
-              <Text style={styles.balanceSubtitle}>YOUR TOTAL BALANCE</Text>
-              <Text style={styles.balanceAmount}>+¥37,350</Text>
-              <Text style={styles.balanceCaption}>Overall, group members owe you money</Text>
-            </View>
-
-            <Text style={styles.sectionHeaderTitle}>Settlement Status</Text>
-            <View style={styles.memberOweCard}>
-              <View style={styles.memberOweRow}>
-                <Image source={{ uri: MEMBERS[1].avatar }} style={styles.oweAvatar} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.oweName}>Kenji owes you</Text>
-                  <Text style={styles.oweSub}>From Shinkansen Tickets</Text>
-                </View>
-                <Text style={[styles.oweAmount, { color: '#10B981' }]}>+¥13,500</Text>
-              </View>
-
-              <View style={styles.innerDivider} />
-
-              <View style={styles.memberOweRow}>
-                <Image source={{ uri: MEMBERS[2].avatar }} style={styles.oweAvatar} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.oweName}>You owe Chloe</Text>
-                  <Text style={styles.oweSub}>From Matcha Parfait</Text>
-                </View>
-                <Text style={[styles.oweAmount, { color: '#EF4444' }]}>-¥1,050</Text>
-              </View>
-            </View>
-
-            <Text style={styles.sectionHeaderTitle}>Recent Expenses</Text>
-            <View style={styles.expenseLogContainer}>
-              {EXPENSES.map((exp) => (
-                <View key={exp.id} style={styles.expenseItem}>
-                  <View style={styles.expenseIconPill}>
-                    <Ionicons name="receipt-outline" size={18} color={Colors.light.text} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.expenseTitle}>{exp.title}</Text>
-                    <Text style={styles.expenseSub}>Paid by {exp.paidBy} • {exp.amount}</Text>
-                  </View>
-                  <View style={{ alignItems: 'flex-end' }}>
-                    <Text style={[styles.shareText, { color: exp.isPositive ? '#10B981' : Colors.light.textSecondary }]}>
-                      {exp.yourShare}
-                    </Text>
-                    <Text style={styles.shareLabel}>{exp.isPositive ? 'you get' : 'your cost'}</Text>
-                  </View>
-                </View>
-              ))}
-            </View>
-          </ScrollView>
         </SafeAreaView>
       </Modal>
     </>
@@ -679,32 +579,33 @@ const styles = StyleSheet.create({
   },
   actionPillsContainer: {
     flexDirection: 'row',
-    gap: 8,
+    gap: 12,
   },
   menuActionPill: {
     flex: 1,
     backgroundColor: 'rgba(255, 255, 255, 0.65)',
     borderRadius: Radius.card,
-    padding: Spacing.two,
+    paddingVertical: Spacing.three,
+    paddingHorizontal: Spacing.two,
     alignItems: 'center',
     borderWidth: Border.hairline,
     borderColor: 'rgba(255, 255, 255, 0.8)',
   },
   pillIconBadge: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
   pillLabel: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
     color: Colors.light.text,
   },
   pillSub: {
-    fontSize: 10,
+    fontSize: 11,
     color: Colors.light.textTertiary,
     marginTop: 2,
   },
@@ -950,128 +851,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: Colors.light.textSecondary,
-  },
-  splitScrollContent: {
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
-  addExpenseBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#000000',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: Radius.pill,
-  },
-  addExpenseText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  balanceCard: {
-    backgroundColor: '#000000',
-    padding: Spacing.four,
-    borderRadius: Radius.card,
-  },
-  balanceSubtitle: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.6)',
-    letterSpacing: 0.8,
-  },
-  balanceAmount: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#10B981',
-    marginVertical: 4,
-  },
-  balanceCaption: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  sectionHeaderTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.light.text,
-    marginTop: Spacing.two,
-  },
-  memberOweCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: Radius.card,
-    padding: Spacing.three,
-    borderWidth: Border.hairline,
-    borderColor: Colors.light.border,
-  },
-  memberOweRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    paddingVertical: 4,
-  },
-  oweAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-  },
-  oweName: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.light.text,
-  },
-  oweSub: {
-    fontSize: 11,
-    color: Colors.light.textTertiary,
-  },
-  oweAmount: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  innerDivider: {
-    height: Border.hairline,
-    backgroundColor: Colors.light.border,
-    marginVertical: 8,
-  },
-  expenseLogContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: Radius.card,
-    paddingHorizontal: Spacing.three,
-    borderWidth: Border.hairline,
-    borderColor: Colors.light.border,
-  },
-  expenseItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: Border.hairline,
-    borderBottomColor: Colors.light.border,
-    gap: 12,
-  },
-  expenseIconPill: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F2F2F7',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  expenseTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.light.text,
-  },
-  expenseSub: {
-    fontSize: 11,
-    color: Colors.light.textTertiary,
-    marginTop: 2,
-  },
-  shareText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  shareLabel: {
-    fontSize: 10,
-    color: Colors.light.textTertiary,
   },
   tabBarWrapper: {
     position: 'absolute',
