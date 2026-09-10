@@ -5,7 +5,9 @@ import {
   Alert,
   Dimensions,
   Image,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   ScrollView,
   Share,
   StyleSheet,
@@ -76,6 +78,37 @@ interface PersonAlbum {
   name: string;
   avatar: string;
 }
+
+interface GroupNote {
+  id: string;
+  author: string;
+  avatar: string;
+  tag: 'Logistics' | 'Food' | 'Tickets' | 'General';
+  title: string;
+  content: string;
+  timeAgo: string;
+}
+
+const INITIAL_NOTES: GroupNote[] = [
+  {
+    id: 'n1',
+    author: 'Ivory (You)',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+    tag: 'Logistics',
+    title: 'Packing & Logistics',
+    content: 'Universal adapter, e-SIM, JR pass pickup at Kansai Airport Terminal 1 counter.',
+    timeAgo: '2h ago',
+  },
+  {
+    id: 'n2',
+    author: 'Chin Jie',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300&auto=format&fit=crop&q=80',
+    tag: 'Food',
+    title: 'Halal Ramen Reservation',
+    content: 'Ayam-YA Karasuma doesn’t require advance reservations, but we should arrive by 6:00 PM to avoid lines.',
+    timeAgo: '5h ago',
+  },
+];
 
 const PEOPLE_ALBUMS: PersonAlbum[] = [
   {
@@ -219,6 +252,13 @@ export default function ItineraryDetailScreen() {
   const [showBeaconModal, setShowBeaconModal] = useState(false);
   const [selectedPlace, setSelectedPlace] = useState<StopItem | null>(null);
 
+  // Notes States
+  const [notesList, setNotesList] = useState<GroupNote[]>(INITIAL_NOTES);
+  const [showNoteModal, setShowNoteModal] = useState(false);
+  const [newNoteTitle, setNewNoteTitle] = useState('');
+  const [newNoteContent, setNewNoteContent] = useState('');
+  const [newNoteTag, setNewNoteTag] = useState<'General' | 'Logistics' | 'Food' | 'Tickets'>('General');
+
   // Journal States
   const [photos, setPhotos] = useState<JournalPhoto[]>(INITIAL_PHOTOS);
   const [selectedAlbum, setSelectedAlbum] = useState<PersonAlbum | null>(null);
@@ -285,6 +325,29 @@ export default function ItineraryDetailScreen() {
     }, 1400);
   };
 
+  const handleAddNote = () => {
+    if (!newNoteTitle.trim() || !newNoteContent.trim()) {
+      Alert.alert('Missing Info', 'Please add both a title and description.');
+      return;
+    }
+
+    const newNote: GroupNote = {
+      id: `note-${Date.now()}`,
+      author: 'Ivory (You)',
+      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&auto=format&fit=crop&q=80',
+      tag: newNoteTag,
+      title: newNoteTitle.trim(),
+      content: newNoteContent.trim(),
+      timeAgo: 'Just now',
+    };
+
+    setNotesList([newNote, ...notesList]);
+    setNewNoteTitle('');
+    setNewNoteContent('');
+    setNewNoteTag('General');
+    setShowNoteModal(false);
+  };
+
   const filteredPhotos = selectedAlbum
     ? photos.filter((p) => p.taggedMemberIds.includes(selectedAlbum.id))
     : photos;
@@ -302,7 +365,6 @@ export default function ItineraryDetailScreen() {
         </TouchableOpacity>
 
         <View style={styles.navActions}>
-          {/* Emergency SOS Trigger */}
           <TouchableOpacity
             style={styles.emergencyNavBtn}
             onPress={() => router.push('/emergency')}
@@ -573,7 +635,7 @@ export default function ItineraryDetailScreen() {
           </View>
         )}
 
-        {/* TAB 3: NOTES & EMERGENCY SAFETY BANNER */}
+        {/* TAB 3: NOTES & SHARED MEMBER MEMOS */}
         {activeTab === 'Notes' && (
           <View style={styles.tabContentContainer}>
             {/* Emergency Quick Access Card */}
@@ -594,9 +656,45 @@ export default function ItineraryDetailScreen() {
               <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
             </TouchableOpacity>
 
-            <View style={styles.simpleCard}>
-              <Text style={styles.cardHeaderTitle}>Packing & Logistics</Text>
-              <Text style={styles.cardHeaderSub}>Universal adapter, e-SIM, JR pass pickup.</Text>
+            {/* Notes Section Header with Drop a Note Button */}
+            <View style={styles.notesHeaderRow}>
+              <View>
+                <Text style={styles.notesHeadingText}>SHARED TRIP NOTES</Text>
+                <Text style={styles.notesSubText}>{notesList.length} reminders from members</Text>
+              </View>
+
+              <TouchableOpacity
+                style={styles.dropNoteButton}
+                activeOpacity={0.85}
+                onPress={() => setShowNoteModal(true)}
+              >
+                <Ionicons name="create-outline" size={15} color="#FFFFFF" />
+                <Text style={styles.dropNoteButtonText}>Drop a Note</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Rendered Notes List */}
+            <View style={styles.notesListContainer}>
+              {notesList.map((item) => (
+                <View key={item.id} style={styles.noteCard}>
+                  <View style={styles.noteTopRow}>
+                    <View style={styles.noteAuthorBox}>
+                      <Image source={{ uri: item.avatar }} style={styles.noteAuthorAvatar} />
+                      <View>
+                        <Text style={styles.noteAuthorName}>{item.author}</Text>
+                        <Text style={styles.noteTimeText}>{item.timeAgo}</Text>
+                      </View>
+                    </View>
+
+                    <View style={[styles.noteTagBadge, getTagBadgeStyle(item.tag)]}>
+                      <Text style={[styles.noteTagText, getTagTextStyle(item.tag)]}>{item.tag}</Text>
+                    </View>
+                  </View>
+
+                  <Text style={styles.noteCardTitle}>{item.title}</Text>
+                  <Text style={styles.noteCardBody}>{item.content}</Text>
+                </View>
+              ))}
             </View>
           </View>
         )}
@@ -693,6 +791,80 @@ export default function ItineraryDetailScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* DROP A NOTE MODAL SHEET */}
+      <Modal
+        visible={showNoteModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowNoteModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalBackdrop}
+        >
+          <View style={styles.modalSheet}>
+            <View style={styles.sheetHandle} />
+
+            <View style={styles.modalHeaderRow}>
+              <View>
+                <Text style={styles.modalHeading}>Drop a Group Note</Text>
+                <Text style={styles.modalSubheading}>Visible to all travelers in real time</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowNoteModal(false)} style={styles.closeCircle}>
+                <Ionicons name="close" size={18} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 24 }}
+            >
+              {/* Note Tag Selector */}
+              <Text style={styles.sectionHeaderLabel}>CATEGORY TAG</Text>
+              <View style={styles.tagWrapRow}>
+                {(['General', 'Logistics', 'Food', 'Tickets'] as const).map((tag) => (
+                  <TouchableOpacity
+                    key={tag}
+                    onPress={() => setNewNoteTag(tag)}
+                    style={[styles.noteTagPill, newNoteTag === tag && styles.noteTagPillActive]}
+                  >
+                    <Text style={[styles.noteTagPillText, newNoteTag === tag && styles.noteTagPillTextActive]}>
+                      {tag}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <Text style={styles.sectionHeaderLabel}>NOTE TITLE</Text>
+              <TextInput
+                value={newNoteTitle}
+                onChangeText={setNewNoteTitle}
+                placeholder="e.g. Luggage storage in Kyoto station"
+                placeholderTextColor="#9CA3AF"
+                style={styles.modalTextInput}
+              />
+
+              <Text style={styles.sectionHeaderLabel}>DETAILS</Text>
+              <TextInput
+                value={newNoteContent}
+                onChangeText={setNewNoteContent}
+                placeholder="Write locker numbers, locker codes, reminders..."
+                placeholderTextColor="#9CA3AF"
+                multiline
+                numberOfLines={3}
+                style={[styles.modalTextInput, styles.modalTextArea]}
+              />
+
+              <TouchableOpacity style={styles.postNoteBtn} onPress={handleAddNote}>
+                <Ionicons name="checkmark-circle-outline" size={16} color="#FFFFFF" />
+                <Text style={styles.postNoteBtnText}>Post Note</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* PHOTO INSPECTOR MODAL */}
       <Modal
@@ -1067,6 +1239,32 @@ export default function ItineraryDetailScreen() {
       </Modal>
     </SafeAreaView>
   );
+}
+
+function getTagBadgeStyle(tag: GroupNote['tag']) {
+  switch (tag) {
+    case 'Logistics':
+      return { backgroundColor: '#EEF2FF' };
+    case 'Food':
+      return { backgroundColor: '#FEF3C7' };
+    case 'Tickets':
+      return { backgroundColor: '#FEE2E2' };
+    default:
+      return { backgroundColor: '#CCFBF1' };
+  }
+}
+
+function getTagTextStyle(tag: GroupNote['tag']) {
+  switch (tag) {
+    case 'Logistics':
+      return { color: '#4338CA' };
+    case 'Food':
+      return { color: '#B45309' };
+    case 'Tickets':
+      return { color: '#B91C1C' };
+    default:
+      return { color: '#0D9488' };
+  }
 }
 
 const styles = StyleSheet.create({
@@ -1675,23 +1873,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#111827',
   },
-  simpleCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  cardHeaderTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  cardHeaderSub: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
-  },
 
   /* Emergency Quick Banner in Notes */
   emergencyBannerCard: {
@@ -1703,7 +1884,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderWidth: 1,
     borderColor: '#FECACA',
-    marginBottom: 12,
+    marginBottom: 14,
     shadowColor: '#DC2626',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -1733,6 +1914,154 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#6B7280',
     marginTop: 1,
+  },
+
+  /* Notes Tab Styles */
+  notesHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  notesHeadingText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#6B7280',
+    letterSpacing: 0.6,
+  },
+  notesSubText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginTop: 1,
+  },
+  dropNoteButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    backgroundColor: '#0D9488',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+    shadowColor: '#0D9488',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  dropNoteButtonText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  notesListContainer: {
+    gap: 10,
+  },
+  noteCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  noteTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  noteAuthorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  noteAuthorAvatar: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  noteAuthorName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  noteTimeText: {
+    fontSize: 10,
+    color: '#9CA3AF',
+  },
+  noteTagBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  noteTagText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  noteCardTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  noteCardBody: {
+    fontSize: 12,
+    color: '#4B5563',
+    lineHeight: 18,
+  },
+
+  /* Note Modal Elements */
+  tagWrapRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 6,
+  },
+  noteTagPill: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#F3F4F6',
+  },
+  noteTagPillActive: {
+    backgroundColor: '#0D9488',
+  },
+  noteTagPillText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#4B5563',
+  },
+  noteTagPillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+  },
+  modalTextInput: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 13,
+    color: '#111827',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 8,
+  },
+  modalTextArea: {
+    height: 75,
+    textAlignVertical: 'top',
+  },
+  postNoteBtn: {
+    backgroundColor: '#111827',
+    borderRadius: 14,
+    paddingVertical: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  postNoteBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '700',
   },
 
   /* Journal Tab Styling */
@@ -2008,8 +2337,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 26,
     borderTopRightRadius: 26,
-    padding: 20,
-    paddingBottom: 32,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: Platform.OS === 'ios' ? 28 : 20,
+    maxHeight: '85%',
   },
   sheetHandle: {
     width: 36,
