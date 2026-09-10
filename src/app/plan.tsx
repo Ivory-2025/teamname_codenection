@@ -1,407 +1,710 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
-  Alert,
-  SafeAreaView,
+  Dimensions,
   ScrollView,
+  Share,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-interface ActivityItem {
-  id: string;
-  time: string;
-  title: string;
-  location: string;
-  category: string;
-  votes: number;
-  userReaction: 'like' | 'dislike' | null;
-}
+const { width } = Dimensions.get('window');
 
-export default function PlanScreen() {
-  // Wizard vs Timeline View state
-  const [isSetupComplete, setIsSetupComplete] = useState<boolean>(false);
-  const [isLocked, setIsLocked] = useState<boolean>(false);
-  const [selectedDay, setSelectedDay] = useState<number>(1);
+const OCTOBER_DAYS = [
+  null, null, null, 1, 2, 3, 4,
+  5, 6, 7, 8, 9, 10, 11,
+  12, 13, 14, 15, 16, 17, 18,
+  19, 20, 21, 22, 23, 24, 25,
+  26, 27, 28, 29, 30, 31,
+];
 
-  // Wizard state
-  const [travelType, setTravelType] = useState<'solo' | 'group'>('group');
-  const [destination, setDestination] = useState<string>('Kyoto, Japan');
-  const [dateRange, setDateRange] = useState<string>('Oct 14 - Oct 20, 2026');
+const TAG_CATEGORIES = {
+  style: [
+    { id: 't1', label: '#Chill' },
+    { id: 't2', label: '#Adventure' },
+    { id: 't3', label: '#CafeHopping' },
+    { id: 't4', label: '#Culture' },
+    { id: 't5', label: '#Photography' },
+    { id: 't6', label: '#Shopping' },
+  ],
+  pace: [
+    { id: 'p1', label: '#SleepIn' },
+    { id: 'p2', label: '#FastPaced' },
+    { id: 'p3', label: '#Balanced' },
+  ],
+  diet: [
+    { id: 'd1', label: '#Halal' },
+    { id: 'd2', label: '#Vegetarian' },
+    { id: 'd3', label: '#Vegan' },
+  ],
+};
 
-  // Timeline & Poll State
-  const [activities, setActivities] = useState<ActivityItem[]>([
-    {
-      id: 'act-1',
-      time: '09:00 AM',
-      title: 'Arashiyama Bamboo Grove',
-      location: 'Ukyo Ward',
-      category: 'Sightseeing',
-      votes: 3,
-      userReaction: 'like',
-    },
-    {
-      id: 'act-2',
-      time: '12:30 PM',
-      title: 'Nishiki Market Food Crawl',
-      location: 'Nakagyo Ward',
-      category: 'Dining',
-      votes: 4,
-      userReaction: null,
-    },
-    {
-      id: 'act-3',
-      time: '03:30 PM',
-      title: 'Fushimi Inari Taisha Shrine',
-      location: 'Fushimi Ward',
-      category: 'Culture',
-      votes: 1,
-      userReaction: 'dislike',
-    },
-  ]);
+export default function AIPlannerScreen() {
+  const router = useRouter();
 
-  // Reorder Handler (Simulates Drag-and-Drop sequence shifts)
-  const moveActivity = (index: number, direction: 'up' | 'down') => {
-    if (isLocked) {
-      Alert.alert('Itinerary Locked', 'Unlock the plan to adjust stop sequences.');
-      return;
+  const [plannerMode, setPlannerMode] = useState<'idle' | 'wizard'>('idle');
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
+
+  // Setup Form
+  const [tripType, setTripType] = useState<'Group' | 'Solo'>('Group');
+  const [tripName, setTripName] = useState('Autumn in Kansai');
+  const [destination, setDestination] = useState('Kyoto & Osaka, Japan');
+
+  // Calendar
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [startDate, setStartDate] = useState<number>(14);
+  const [endDate, setEndDate] = useState<number>(20);
+
+  // Tags & Budgets
+  const [selectedTags, setSelectedTags] = useState<string[]>(['#Chill', '#CafeHopping']);
+  const [stayLimit, setStayLimit] = useState('250');
+  const [transitCap, setTransitCap] = useState('40');
+  const [dailyLiving, setDailyLiving] = useState('120');
+
+  const handleDatePress = (day: number) => {
+    if (day < startDate) {
+      setStartDate(day);
+      setEndDate(day + 3);
+    } else {
+      setEndDate(day);
+      // Keeps calendar open so user can review or tap dates again
     }
-    const newIndex = direction === 'up' ? index - 1 : index + 1;
-    if (newIndex < 0 || newIndex >= activities.length) return;
-
-    const updated = [...activities];
-    const [movedItem] = updated.splice(index, 1);
-    updated.splice(newIndex, 0, movedItem);
-    setActivities(updated);
   };
 
-  // Vote & Reaction Handlers
-  const handleReaction = (id: string, reaction: 'like' | 'dislike') => {
-    if (isLocked) return;
-    setActivities((prev) =>
-      prev.map((item) => {
-        if (item.id !== id) return item;
-        const currentReaction = item.userReaction;
-        if (currentReaction === reaction) {
-          return {
-            ...item,
-            userReaction: null,
-            votes: reaction === 'like' ? item.votes - 1 : item.votes,
-          };
-        }
-        return {
-          ...item,
-          userReaction: reaction,
-          votes:
-            reaction === 'like'
-              ? currentReaction === null
-                ? item.votes + 1
-                : item.votes + 1
-              : currentReaction === 'like'
-              ? item.votes - 1
-              : item.votes,
-        };
-      })
-    );
+  const toggleTag = (label: string) => {
+    if (selectedTags.includes(label)) {
+      setSelectedTags(selectedTags.filter((t) => t !== label));
+    } else {
+      setSelectedTags([...selectedTags, label]);
+    }
   };
 
-  // Toggle Lock-in Itinerary
-  const handleToggleLock = () => {
-    setIsLocked((prev) => {
-      const nextState = !prev;
-      Alert.alert(
-        nextState ? 'Itinerary Locked' : 'Itinerary Unlocked',
-        nextState
-          ? 'Plan frozen and cached for offline use.'
-          : 'Edits and reordering re-enabled.'
-      );
-      return nextState;
-    });
+  const handleShareInvite = async () => {
+    try {
+      await Share.share({
+        message: `Join our trip "${tripName}" on Escape! app.escape.io/join/kansai-2026`,
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleFinishWizard = () => {
+    setPlannerMode('idle');
+    if (tripType === 'Solo') {
+      router.push('/plan-solo' as any);
+    } else {
+      router.push('/plan-group' as any);
+    }
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100">
-      {/* ========================================================================= */}
-      {/* STEP 1: CONVERSATIONAL SETUP WIZARD                                       */}
-      {/* ========================================================================= */}
-      {!isSetupComplete ? (
-        <ScrollView contentContainerStyle={{ padding: 20 }}>
-          <View className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-            <View className="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-4" />
-            <Text className="text-xs font-bold text-teal-600 uppercase tracking-widest">
-              AI Travel Assistant
-            </Text>
-            <Text className="text-2xl font-bold text-gray-900 mt-1">
-              Let's craft your journey
-            </Text>
-            <Text className="text-xs text-gray-500 mb-6 mt-1">
-              Answer a few questions so the AI can generate your custom itinerary.
-            </Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Top Bar */}
+      <View style={styles.topBar}>
+        <View style={styles.topBarLeft}>
+          <Ionicons name="sparkles" size={18} color="#0D9488" />
+          <Text style={styles.topBarHeading}>AI Trip Manager</Text>
+        </View>
+      </View>
 
-            {/* Travel Mode Toggle */}
-            <Text className="text-xs font-bold text-gray-700 uppercase mb-2">
-              1. Travel Group Type
-            </Text>
-            <View className="flex-row gap-3 mb-5">
-              <TouchableOpacity
-                onPress={() => setTravelType('solo')}
-                className={`flex-1 p-3.5 rounded-2xl border items-center ${
-                  travelType === 'solo'
-                    ? 'bg-teal-50 border-teal-500'
-                    : 'bg-gray-50 border-gray-200'
-                }`}
-              >
-                <Text className="text-xl mb-1">🎒</Text>
-                <Text
-                  className={`text-xs font-bold ${
-                    travelType === 'solo' ? 'text-teal-700' : 'text-gray-600'
-                  }`}
-                >
-                  Solo Trip
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => setTravelType('group')}
-                className={`flex-1 p-3.5 rounded-2xl border items-center ${
-                  travelType === 'group'
-                    ? 'bg-teal-50 border-teal-500'
-                    : 'bg-gray-50 border-gray-200'
-                }`}
-              >
-                <Text className="text-xl mb-1">👥</Text>
-                <Text
-                  className={`text-xs font-bold ${
-                    travelType === 'group' ? 'text-teal-700' : 'text-gray-600'
-                  }`}
-                >
-                  Group Trip
-                </Text>
-              </TouchableOpacity>
+      {plannerMode === 'idle' ? (
+        <View style={styles.emptyContainer}>
+          <View style={styles.emptyIllustrationBox}>
+            <Ionicons name="map-outline" size={56} color="#0D9488" />
+            <View style={styles.emptySparkleBadge}>
+              <Ionicons name="sparkles" size={16} color="#FFFFFF" />
             </View>
-
-            {/* Destination Input */}
-            <Text className="text-xs font-bold text-gray-700 uppercase mb-2">
-              2. Destination
-            </Text>
-            <TextInput
-              value={destination}
-              onChangeText={setDestination}
-              placeholder="e.g., Tokyo, Osaka, Kyoto"
-              className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-semibold text-gray-800 mb-5"
-            />
-
-            {/* Date Range Picker Placeholder */}
-            <Text className="text-xs font-bold text-gray-700 uppercase mb-2">
-              3. Travel Dates
-            </Text>
-            <TextInput
-              value={dateRange}
-              onChangeText={setDateRange}
-              placeholder="e.g., Oct 14 - Oct 20, 2026"
-              className="bg-gray-50 border border-gray-200 rounded-xl p-3 text-sm font-semibold text-gray-800 mb-6"
-            />
-
-            {/* Trigger AI Plan Generation */}
-            <TouchableOpacity
-              onPress={() => setIsSetupComplete(true)}
-              className="bg-teal-600 py-4 rounded-2xl items-center shadow-sm active:opacity-90"
-            >
-              <Text className="text-white font-bold text-sm">
-                Generate Smart Itinerary ✨
-              </Text>
-            </TouchableOpacity>
           </View>
-        </ScrollView>
+
+          <Text style={styles.emptyTitle}>Create a New Travel Plan</Text>
+          <Text style={styles.emptySubtitle}>
+            Configure your trip preferences (Solo vs. Group), pick dates on the calendar, set your budget limits, and generate a customized route.
+          </Text>
+
+          <TouchableOpacity
+            style={styles.createMainBtn}
+            activeOpacity={0.88}
+            onPress={() => {
+              setWizardStep(1);
+              setPlannerMode('wizard');
+            }}
+          >
+            <Ionicons name="add" size={20} color="#FFFFFF" />
+            <Text style={styles.createMainBtnText}>Start Travel Planner</Text>
+          </TouchableOpacity>
+        </View>
       ) : (
-        /* ========================================================================= */
-        /* STEP 2: TIMELINE BUILDER, POLLS & LOCK-IN                                 */
-        /* ========================================================================= */
-        <View className="flex-1">
-          {/* Top Itinerary Action Bar */}
-          <View className="bg-white border-b border-gray-200 px-4 py-3 flex-row justify-between items-center">
-            <View>
-              <Text className="text-base font-bold text-gray-900">{destination}</Text>
-              <Text className="text-[10px] text-gray-500 font-medium">{dateRange}</Text>
+        /* FULL-SCREEN WIZARD */
+        <View style={styles.flexOne}>
+          <View style={styles.wizardTopBar}>
+            <TouchableOpacity
+              onPress={() => {
+                if (wizardStep > 1) {
+                  setWizardStep((prev) => (prev - 1) as any);
+                } else {
+                  setPlannerMode('idle');
+                }
+              }}
+              style={styles.circleBackBtn}
+            >
+              <Ionicons name="arrow-back" size={20} color="#111827" />
+            </TouchableOpacity>
+
+            <View style={styles.wizardTitleCenter}>
+              <Text style={styles.wizardNavTitle}>Trip Alignment Setup</Text>
+              <Text style={styles.wizardNavStepText}>Step {wizardStep} of 3</Text>
             </View>
 
-            {/* Lock-In / Unlock Button */}
-            <TouchableOpacity
-              onPress={handleToggleLock}
-              className={`px-3.5 py-2 rounded-full flex-row items-center gap-1.5 border ${
-                isLocked
-                  ? 'bg-amber-50 border-amber-400'
-                  : 'bg-teal-50 border-teal-500'
-              }`}
-            >
-              <Text className="text-xs">{isLocked ? '🔒' : '🔓'}</Text>
-              <Text
-                className={`text-xs font-bold ${
-                  isLocked ? 'text-amber-800' : 'text-teal-700'
-                }`}
-              >
-                {isLocked ? 'Locked (Offline Ready)' : 'Lock Plan'}
-              </Text>
+            <TouchableOpacity onPress={() => setPlannerMode('idle')} style={styles.circleCloseBtn}>
+              <Ionicons name="close" size={20} color="#4B5563" />
             </TouchableOpacity>
           </View>
 
-          {/* Horizontal Day Tabs */}
-          <View className="bg-white px-4 py-2 border-b border-gray-100 flex-row gap-2">
-            {[1, 2, 3, 4].map((day) => (
-              <TouchableOpacity
-                key={day}
-                onPress={() => setSelectedDay(day)}
-                className={`px-4 py-1.5 rounded-full ${
-                  selectedDay === day ? 'bg-teal-600' : 'bg-gray-100'
-                }`}
-              >
-                <Text
-                  className={`text-xs font-bold ${
-                    selectedDay === day ? 'text-white' : 'text-gray-600'
-                  }`}
-                >
-                  Day {day}
-                </Text>
-              </TouchableOpacity>
-            ))}
+          <View style={styles.progressTrack}>
+            <View style={[styles.progressFill, { width: `${(wizardStep / 3) * 100}%` }]} />
           </View>
 
-          {/* Timeline & Suggestion Polls */}
-          <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
-            <View className="flex-row justify-between items-center mb-3">
-              <Text className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                Day {selectedDay} Sequence & Polls
-              </Text>
-              {!isLocked && (
-                <Text className="text-[10px] text-teal-600 font-semibold">
-                  Use ▲ / ▼ to reorder stops
+          <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.wizardScrollContent}>
+            {/* STEP 1: SOLO VS GROUP & DATES */}
+            {wizardStep === 1 && (
+              <View>
+                <Text style={styles.stepTitle}>Who is Traveling & When?</Text>
+                <Text style={styles.stepDesc}>
+                  Select Solo if planning alone, or Group to invite travel buddies for collaborative polling.
                 </Text>
-              )}
-            </View>
 
-            {activities.map((item, index) => (
-              <View
-                key={item.id}
-                className="bg-white p-4 rounded-2xl mb-3 border border-gray-100 shadow-sm"
-              >
-                <View className="flex-row justify-between items-start">
-                  <View className="flex-1 pr-2">
-                    <View className="flex-row items-center gap-2 mb-1">
-                      <Text className="text-xs font-bold text-teal-600">
-                        {item.time}
-                      </Text>
-                      <Text className="text-[10px] text-gray-400 font-semibold uppercase bg-gray-100 px-2 py-0.5 rounded-full">
-                        {item.category}
-                      </Text>
+                {/* Solo vs Group Toggle */}
+                <Text style={styles.fieldLabel}>TRAVEL MODE</Text>
+                <View style={styles.modeToggleContainer}>
+                  <TouchableOpacity
+                    style={[styles.modeCard, tripType === 'Solo' && styles.modeCardActive]}
+                    activeOpacity={0.8}
+                    onPress={() => setTripType('Solo')}
+                  >
+                    <View style={[styles.modeIconCircle, tripType === 'Solo' && styles.modeIconCircleActive]}>
+                      <Ionicons name="person" size={20} color={tripType === 'Solo' ? '#FFFFFF' : '#4B5563'} />
                     </View>
-                    <Text className="text-base font-bold text-gray-900">
-                      {item.title}
-                    </Text>
-                    <Text className="text-xs text-gray-500 mt-0.5">
-                      📍 {item.location}
-                    </Text>
-                  </View>
+                    <Text style={[styles.modeTitle, tripType === 'Solo' && styles.modeTitleActive]}>Solo Trip</Text>
+                    <Text style={styles.modeSub}>Fast personalized AI plan</Text>
+                  </TouchableOpacity>
 
-                  {/* Reorder Shift Buttons */}
-                  {!isLocked && (
-                    <View className="flex-col gap-1 items-center justify-center bg-gray-50 p-1 rounded-lg border border-gray-100">
-                      <TouchableOpacity
-                        onPress={() => moveActivity(index, 'up')}
-                        disabled={index === 0}
-                        className="px-1.5 py-0.5"
-                      >
-                        <Text
-                          className={`text-xs font-bold ${
-                            index === 0 ? 'text-gray-300' : 'text-gray-700'
-                          }`}
-                        >
-                          ▲
-                        </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => moveActivity(index, 'down')}
-                        disabled={index === activities.length - 1}
-                        className="px-1.5 py-0.5"
-                      >
-                        <Text
-                          className={`text-xs font-bold ${
-                            index === activities.length - 1
-                              ? 'text-gray-300'
-                              : 'text-gray-700'
-                          }`}
-                        >
-                          ▼
-                        </Text>
-                      </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modeCard, tripType === 'Group' && styles.modeCardActive]}
+                    activeOpacity={0.8}
+                    onPress={() => setTripType('Group')}
+                  >
+                    <View style={[styles.modeIconCircle, tripType === 'Group' && styles.modeIconCircleActive]}>
+                      <Ionicons name="people" size={20} color={tripType === 'Group' ? '#FFFFFF' : '#4B5563'} />
                     </View>
-                  )}
+                    <Text style={[styles.modeTitle, tripType === 'Group' && styles.modeTitleActive]}>Group Trip</Text>
+                    <Text style={styles.modeSub}>Alignment, voting & polls</Text>
+                  </TouchableOpacity>
                 </View>
 
-                {/* Group Poll & Reaction Bar */}
-                <View className="flex-row justify-between items-center mt-3 pt-3 border-t border-gray-100">
-                  <View className="flex-row items-center gap-1.5">
-                    <Text className="text-xs font-bold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-full border border-teal-100">
-                      👍 {item.votes} Group Votes
+                <Text style={styles.fieldLabel}>TRIP NAME</Text>
+                <TextInput
+                  value={tripName}
+                  onChangeText={setTripName}
+                  style={styles.fullScreenInput}
+                  placeholder="e.g. Kansai Autumn Tour"
+                />
+
+                <Text style={styles.fieldLabel}>DESTINATION</Text>
+                <TextInput
+                  value={destination}
+                  onChangeText={setDestination}
+                  style={styles.fullScreenInput}
+                  placeholder="e.g. Kyoto & Osaka"
+                />
+
+                <Text style={styles.fieldLabel}>TRIP DATES</Text>
+                <TouchableOpacity
+                  style={styles.dateSelectorBar}
+                  activeOpacity={0.8}
+                  onPress={() => setShowCalendar((prev) => !prev)}
+                >
+                  <View style={styles.dateSelectorLeft}>
+                    <Ionicons name="calendar" size={18} color="#0D9488" />
+                    <Text style={styles.dateSelectorValue}>
+                      Oct {startDate} – Oct {endDate}, 2026
                     </Text>
                   </View>
+                  <View style={styles.durationBadge}>
+                    <Text style={styles.durationBadgeText}>{endDate - startDate + 1} Days</Text>
+                    <Ionicons name={showCalendar ? 'chevron-up' : 'chevron-down'} size={14} color="#0D9488" />
+                  </View>
+                </TouchableOpacity>
 
-                  <View className="flex-row gap-2">
-                    <TouchableOpacity
-                      onPress={() => handleReaction(item.id, 'like')}
-                      className={`px-3 py-1 rounded-xl border flex-row items-center gap-1 ${
-                        item.userReaction === 'like'
-                          ? 'bg-teal-50 border-teal-500'
-                          : 'bg-gray-50 border-gray-200'
-                      }`}
-                    >
-                      <Text className="text-xs">👍</Text>
-                      <Text
-                        className={`text-xs font-bold ${
-                          item.userReaction === 'like'
-                            ? 'text-teal-700'
-                            : 'text-gray-600'
-                        }`}
-                      >
-                        Agree
-                      </Text>
-                    </TouchableOpacity>
+                {showCalendar && (
+                  <View style={styles.calendarContainer}>
+                    <View style={styles.calendarMonthHeader}>
+                      <Text style={styles.calendarMonthTitle}>October 2026</Text>
+                      <Text style={styles.calendarPrompt}>Select date range</Text>
+                    </View>
+                    <View style={styles.weekDaysRow}>
+                      {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((w, idx) => (
+                        <Text key={idx} style={styles.weekDayLabel}>{w}</Text>
+                      ))}
+                    </View>
+                    <View style={styles.daysGrid}>
+                      {OCTOBER_DAYS.map((day, idx) => {
+                        if (day === null) return <View key={idx} style={styles.emptyDayCell} />;
+                        const isStart = day === startDate;
+                        const isEnd = day === endDate;
+                        const inRange = day > startDate && day < endDate;
+                        return (
+                          <TouchableOpacity
+                            key={idx}
+                            onPress={() => handleDatePress(day)}
+                            style={[
+                              styles.dayCell,
+                              inRange && styles.dayCellInRange,
+                              (isStart || isEnd) && styles.dayCellSelected,
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.dayCellText,
+                                inRange && styles.dayCellTextInRange,
+                                (isStart || isEnd) && styles.dayCellTextSelected,
+                              ]}
+                            >
+                              {day}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
 
-                    <TouchableOpacity
-                      onPress={() => handleReaction(item.id, 'dislike')}
-                      className={`px-3 py-1 rounded-xl border flex-row items-center gap-1 ${
-                        item.userReaction === 'dislike'
-                          ? 'bg-red-50 border-red-400'
-                          : 'bg-gray-50 border-gray-200'
-                      }`}
-                    >
-                      <Text className="text-xs">👎</Text>
-                      <Text
-                        className={`text-xs font-bold ${
-                          item.userReaction === 'dislike'
-                            ? 'text-red-700'
-                            : 'text-gray-600'
-                        }`}
-                      >
-                        Pass
-                      </Text>
+                {/* INVITATION LINK: Rendered directly in Step 1 when Group Trip is active */}
+                {tripType === 'Group' && (
+                  <View style={styles.inviteShareBox}>
+                    <View style={styles.inviteShareLeft}>
+                      <View style={styles.inviteIconCircle}>
+                        <Ionicons name="people" size={16} color="#0D9488" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.inviteLinkText}>app.escape.io/join/kansai-2026</Text>
+                        <Text style={styles.inviteSubText}>Share link with travel buddies to calibrate</Text>
+                      </View>
+                    </View>
+                    <TouchableOpacity style={styles.shareIconBtn} activeOpacity={0.8} onPress={handleShareInvite}>
+                      <Ionicons name="share-social-outline" size={16} color="#FFFFFF" />
                     </TouchableOpacity>
                   </View>
+                )}
+
+                <TouchableOpacity style={styles.primaryNextBtn} onPress={() => setWizardStep(2)}>
+                  <Text style={styles.primaryNextBtnText}>Next: Style & Diet Tags →</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* STEP 2: TAGS */}
+            {wizardStep === 2 && (
+              <View>
+                <Text style={styles.stepTitle}>Travel Vibes & Preferences</Text>
+                <Text style={styles.stepDesc}>
+                  Select your tags so the algorithm calibrates spots matching your schedule.
+                </Text>
+
+                <Text style={styles.tagSectionLabel}>TRAVEL STYLE</Text>
+                <View style={styles.tagWrap}>
+                  {TAG_CATEGORIES.style.map((tag) => (
+                    <TouchableOpacity
+                      key={tag.id}
+                      onPress={() => toggleTag(tag.label)}
+                      style={[styles.tagPill, selectedTags.includes(tag.label) && styles.tagPillActive]}
+                    >
+                      <Text style={[styles.tagPillText, selectedTags.includes(tag.label) && styles.tagPillTextActive]}>
+                        {tag.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={styles.tagSectionLabel}>DAILY PACE</Text>
+                <View style={styles.tagWrap}>
+                  {TAG_CATEGORIES.pace.map((tag) => (
+                    <TouchableOpacity
+                      key={tag.id}
+                      onPress={() => toggleTag(tag.label)}
+                      style={[styles.tagPill, selectedTags.includes(tag.label) && styles.tagPillActive]}
+                    >
+                      <Text style={[styles.tagPillText, selectedTags.includes(tag.label) && styles.tagPillTextActive]}>
+                        {tag.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={styles.tagSectionLabel}>DIETARY RESTRICTIONS</Text>
+                <View style={styles.tagWrap}>
+                  {TAG_CATEGORIES.diet.map((tag) => (
+                    <TouchableOpacity
+                      key={tag.id}
+                      onPress={() => toggleTag(tag.label)}
+                      style={[styles.tagPill, selectedTags.includes(tag.label) && styles.tagPillActive]}
+                    >
+                      <Text style={[styles.tagPillText, selectedTags.includes(tag.label) && styles.tagPillTextActive]}>
+                        {tag.label}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <View style={styles.twoBtnRow}>
+                  <TouchableOpacity style={styles.prevBtn} onPress={() => setWizardStep(1)}>
+                    <Text style={styles.prevBtnText}>Back</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.nextStepBtnFlex} onPress={() => setWizardStep(3)}>
+                    <Text style={styles.primaryNextBtnText}>Next: Budget Limits →</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-            ))}
+            )}
 
-            <TouchableOpacity
-              onPress={() => setIsSetupComplete(false)}
-              className="mt-4 p-3 items-center"
-            >
-              <Text className="text-xs text-gray-400 font-bold">
-                ← Reconfigure Trip Wizard
-              </Text>
-            </TouchableOpacity>
+            {/* STEP 3: BUDGETS & ROUTE REDIRECTION */}
+            {wizardStep === 3 && (
+              <View>
+                <Text style={styles.stepTitle}>Budget Ceilings</Text>
+                <Text style={styles.stepDesc}>
+                  Enter limits to filter activities according to your wallet.
+                </Text>
+
+                <View style={styles.budgetCard}>
+                  <Text style={styles.budgetCardHeading}>🏨 Stay Cap (Per Room / Night)</Text>
+                  <View style={styles.numberInputBar}>
+                    <Text style={styles.currencyPrefix}>RM</Text>
+                    <TextInput
+                      value={stayLimit}
+                      onChangeText={setStayLimit}
+                      keyboardType="numeric"
+                      style={styles.numericTextInput}
+                    />
+                    <Text style={styles.unitSuffix}>/ night</Text>
+                  </View>
+                </View>
+
+                <View style={styles.budgetCard}>
+                  <Text style={styles.budgetCardHeading}>🚆 Daily Transit Allowance</Text>
+                  <View style={styles.numberInputBar}>
+                    <Text style={styles.currencyPrefix}>RM</Text>
+                    <TextInput
+                      value={transitCap}
+                      onChangeText={setTransitCap}
+                      keyboardType="numeric"
+                      style={styles.numericTextInput}
+                    />
+                    <Text style={styles.unitSuffix}>/ day</Text>
+                  </View>
+                </View>
+
+                <View style={styles.budgetCard}>
+                  <Text style={styles.budgetCardHeading}>🍜 Daily Living (Food & Tickets)</Text>
+                  <View style={styles.numberInputBar}>
+                    <Text style={styles.currencyPrefix}>RM</Text>
+                    <TextInput
+                      value={dailyLiving}
+                      onChangeText={setDailyLiving}
+                      keyboardType="numeric"
+                      style={styles.numericTextInput}
+                    />
+                    <Text style={styles.unitSuffix}>/ day</Text>
+                  </View>
+                </View>
+
+                <View style={styles.twoBtnRow}>
+                  <TouchableOpacity style={styles.prevBtn} onPress={() => setWizardStep(2)}>
+                    <Text style={styles.prevBtnText}>Back</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.nextStepBtnFlex} onPress={handleFinishWizard}>
+                    <Text style={styles.primaryNextBtnText}>
+                      {tripType === 'Solo' ? 'Open Solo Studio →' : 'Open Group Studio →'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </ScrollView>
         </View>
       )}
     </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  flexOne: { flex: 1 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderColor: '#E5E7EB',
+  },
+  topBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  topBarHeading: { fontSize: 16, fontWeight: '800', color: '#111827' },
+  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 },
+  emptyIllustrationBox: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: '#CCFBF1',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  emptySparkleBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    backgroundColor: '#0D9488',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#111827', textAlign: 'center' },
+  emptySubtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginTop: 8,
+    marginBottom: 26,
+  },
+  createMainBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#0D9488',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+  },
+  createMainBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
+  wizardTopBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#FFFFFF',
+  },
+  circleBackBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wizardTitleCenter: { alignItems: 'center' },
+  wizardNavTitle: { fontSize: 15, fontWeight: '800', color: '#111827' },
+  wizardNavStepText: { fontSize: 11, color: '#0D9488', fontWeight: '700', marginTop: 1 },
+  circleCloseBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  progressTrack: { height: 3, backgroundColor: '#E5E7EB', width: '100%' },
+  progressFill: { height: '100%', backgroundColor: '#0D9488' },
+  wizardScrollContent: { padding: 20, paddingBottom: 160 },
+  stepTitle: { fontSize: 20, fontWeight: '800', color: '#111827' },
+  stepDesc: { fontSize: 13, color: '#6B7280', lineHeight: 19, marginTop: 4, marginBottom: 16 },
+  fieldLabel: { fontSize: 10, fontWeight: '800', color: '#6B7280', letterSpacing: 0.5, marginTop: 10, marginBottom: 6 },
+  modeToggleContainer: { flexDirection: 'row', gap: 10, marginBottom: 12 },
+  modeCard: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+  },
+  modeCardActive: { borderColor: '#0D9488', backgroundColor: '#F0FDFA' },
+  modeIconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  modeIconCircleActive: { backgroundColor: '#0D9488' },
+  modeTitle: { fontSize: 13, fontWeight: '700', color: '#374151' },
+  modeTitleActive: { color: '#0D9488', fontWeight: '800' },
+  modeSub: { fontSize: 10, color: '#9CA3AF', marginTop: 2, textAlign: 'center' },
+  fullScreenInput: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#111827',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 6,
+  },
+  dateSelectorBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 8,
+  },
+  dateSelectorLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  dateSelectorValue: { fontSize: 14, fontWeight: '700', color: '#111827' },
+  durationBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#CCFBF1',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  durationBadgeText: { fontSize: 11, fontWeight: '700', color: '#0D9488' },
+  calendarContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 14,
+  },
+  calendarMonthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  calendarMonthTitle: { fontSize: 15, fontWeight: '800', color: '#111827' },
+  calendarPrompt: { fontSize: 11, fontWeight: '600', color: '#0D9488' },
+  weekDaysRow: { flexDirection: 'row', justifyContent: 'space-around', marginBottom: 8 },
+  weekDayLabel: { fontSize: 11, fontWeight: '700', color: '#9CA3AF', width: 36, textAlign: 'center' },
+  daysGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around' },
+  emptyDayCell: { width: (width - 72) / 7, height: 38 },
+  dayCell: {
+    width: (width - 72) / 7,
+    height: 38,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 19,
+    marginVertical: 2,
+  },
+  dayCellInRange: { backgroundColor: '#F0FDFA', borderRadius: 0 },
+  dayCellSelected: { backgroundColor: '#0D9488', borderRadius: 19 },
+  dayCellText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+  dayCellTextInRange: { color: '#0D9488', fontWeight: '700' },
+  dayCellTextSelected: { color: '#FFFFFF', fontWeight: '800' },
+  inviteShareBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F0FDFA',
+    borderRadius: 14,
+    padding: 12,
+    marginTop: 6,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#CCFBF1',
+  },
+  inviteShareLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  inviteIconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#CCFBF1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  inviteLinkText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0F766E',
+  },
+  inviteSubText: {
+    fontSize: 10,
+    color: '#6B7280',
+    marginTop: 1,
+  },
+  shareIconBtn: {
+    backgroundColor: '#0D9488',
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryNextBtn: {
+    backgroundColor: '#111827',
+    paddingVertical: 15,
+    borderRadius: 14,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  primaryNextBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  tagSectionLabel: { fontSize: 10, fontWeight: '800', color: '#6B7280', letterSpacing: 0.5, marginTop: 10, marginBottom: 6 },
+  tagWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
+  tagPill: { paddingVertical: 6, paddingHorizontal: 12, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E5E7EB' },
+  tagPillActive: { backgroundColor: '#0D9488', borderColor: '#0D9488' },
+  tagPillText: { fontSize: 11, fontWeight: '600', color: '#374151' },
+  tagPillTextActive: { color: '#FFFFFF', fontWeight: '700' },
+  budgetCard: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 10 },
+  budgetCardHeading: { fontSize: 11, fontWeight: '700', color: '#374151', marginBottom: 8 },
+  numberInputBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  currencyPrefix: { fontSize: 13, fontWeight: '700', color: '#6B7280', marginRight: 6 },
+  numericTextInput: { flex: 1, fontSize: 15, fontWeight: '800', color: '#111827', paddingVertical: 8 },
+  unitSuffix: { fontSize: 11, color: '#9CA3AF' },
+  twoBtnRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
+  prevBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: 14,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  prevBtnText: { color: '#4B5563', fontSize: 12, fontWeight: '700' },
+  nextStepBtnFlex: {
+    flex: 1,
+    backgroundColor: '#111827',
+    paddingVertical: 12,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
