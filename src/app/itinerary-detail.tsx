@@ -2,17 +2,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    Alert,
-    Dimensions,
-    Image,
-    Modal,
-    ScrollView,
-    Share,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  Dimensions,
+  Image,
+  Modal,
+  ScrollView,
+  Share,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -113,7 +113,7 @@ const INITIAL_PHOTOS: JournalPhoto[] = [
   {
     id: 'p2',
     uri: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80',
-    caption: 'Tried the giant grilled squid skewers! 🦑',
+    caption: 'Giant grilled squid skewers! 🦑',
     location: 'Nishiki Market',
     date: 'Oct 14, 01:15 PM',
     uploadedBy: 'Chin Jie',
@@ -122,38 +122,11 @@ const INITIAL_PHOTOS: JournalPhoto[] = [
   {
     id: 'p3',
     uri: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=600&auto=format&fit=crop&q=80',
-    caption: 'Golden Pavilion gleaming under the autumn sun',
+    caption: 'Golden Pavilion gleaming under the sun',
     location: 'Kinkaku-ji',
     date: 'Oct 14, 04:45 PM',
     uploadedBy: 'ZhiHeng',
     taggedMemberIds: ['m1', 'm3', 'm4'],
-  },
-  {
-    id: 'p4',
-    uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop&q=80',
-    caption: 'Matcha ice cream break near the station',
-    location: 'Kyoto Central',
-    date: 'Oct 15, 11:20 AM',
-    uploadedBy: 'Sarah',
-    taggedMemberIds: ['m4', 'm1'],
-  },
-  {
-    id: 'p5',
-    uri: 'https://images.unsplash.com/photo-1538485399081-7191377e8241?w=600&auto=format&fit=crop&q=80',
-    caption: 'Traditional Gion alleyway at dusk',
-    location: 'Gion District',
-    date: 'Oct 15, 06:10 PM',
-    uploadedBy: 'Ivory (You)',
-    taggedMemberIds: ['m1', 'm2', 'm3', 'm4'],
-  },
-  {
-    id: 'p6',
-    uri: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=600&auto=format&fit=crop&q=80',
-    caption: 'Late night ramen stop in Osaka Dotonbori',
-    location: 'Dotonbori, Osaka',
-    date: 'Oct 15, 10:45 PM',
-    uploadedBy: 'Chin Jie',
-    taggedMemberIds: ['m2', 'm3'],
   },
 ];
 
@@ -252,7 +225,7 @@ export default function ItineraryDetailScreen() {
   const [selectedPhoto, setSelectedPhoto] = useState<JournalPhoto | null>(null);
   const [isScanning, setIsScanning] = useState(false);
 
-  // Alignment Preferences State
+  // Preferences State
   const [selectedTags, setSelectedTags] = useState<string[]>(['#CafeHopping', '#Chill']);
   const [stayBudget, setStayBudget] = useState('250');
   const [transitCap, setTransitCap] = useState('40');
@@ -295,8 +268,8 @@ export default function ItineraryDetailScreen() {
     setTimeout(() => {
       const newPhoto: JournalPhoto = {
         id: Date.now().toString(),
-        uri: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=600&auto=format&fit=crop&q=80',
-        caption: 'Group selfie in front of the shrine torii gate! ⛩️',
+        uri: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=600&auto=format&fit=crop&q=80',
+        caption: 'Group photo in front of the torii gates! ⛩️',
         location: 'Fushimi Inari',
         date: 'Just now',
         uploadedBy: 'Ivory (You)',
@@ -307,7 +280,7 @@ export default function ItineraryDetailScreen() {
       setIsScanning(false);
       Alert.alert(
         'AI Face Recognition Complete ✨',
-        '2 faces recognized (Ivory & ZhiHeng). Auto-indexed into their personal albums!'
+        'Recognized 2 faces (Ivory & ZhiHeng). Auto-indexed into their personal albums!'
       );
     }, 1400);
   };
@@ -318,7 +291,7 @@ export default function ItineraryDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Top App Bar */}
+      {/* Top App Bar with SOS Button */}
       <View style={styles.navBar}>
         <TouchableOpacity
           onPress={() => router.back()}
@@ -329,6 +302,16 @@ export default function ItineraryDetailScreen() {
         </TouchableOpacity>
 
         <View style={styles.navActions}>
+          {/* Emergency SOS Trigger */}
+          <TouchableOpacity
+            style={styles.emergencyNavBtn}
+            onPress={() => router.push('/emergency')}
+            activeOpacity={0.85}
+          >
+            <Ionicons name="warning" size={13} color="#DC2626" />
+            <Text style={styles.emergencyNavText}>SOS</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
             style={styles.beaconButton}
             onPress={() => setShowBeaconModal(true)}
@@ -379,7 +362,7 @@ export default function ItineraryDetailScreen() {
           </View>
         </View>
 
-        {/* Section Tabs (Itinerary, Budget, Notes, Journal) */}
+        {/* Section Tabs */}
         <View style={styles.tabBar}>
           {(['Itinerary', 'Budget', 'Notes', 'Journal'] as const).map((tab) => (
             <TouchableOpacity
@@ -590,9 +573,27 @@ export default function ItineraryDetailScreen() {
           </View>
         )}
 
-        {/* TAB 3: NOTES */}
+        {/* TAB 3: NOTES & EMERGENCY SAFETY BANNER */}
         {activeTab === 'Notes' && (
           <View style={styles.tabContentContainer}>
+            {/* Emergency Quick Access Card */}
+            <TouchableOpacity
+              style={styles.emergencyBannerCard}
+              activeOpacity={0.88}
+              onPress={() => router.push('/emergency')}
+            >
+              <View style={styles.emergencyBannerLeft}>
+                <View style={styles.sosShieldIcon}>
+                  <Ionicons name="shield-checkmark" size={20} color="#DC2626" />
+                </View>
+                <View style={styles.flexOne}>
+                  <Text style={styles.emergencyBannerTitle}>Emergency Assistance Hub</Text>
+                  <Text style={styles.emergencyBannerSub}>1-Tap 110/119 Dialers • Nearby Hospitals & SOS</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />
+            </TouchableOpacity>
+
             <View style={styles.simpleCard}>
               <Text style={styles.cardHeaderTitle}>Packing & Logistics</Text>
               <Text style={styles.cardHeaderSub}>Universal adapter, e-SIM, JR pass pickup.</Text>
@@ -600,14 +601,13 @@ export default function ItineraryDetailScreen() {
           </View>
         )}
 
-        {/* TAB 4: JOURNAL & AI PEOPLE ALBUMS (SEPARATE FULL PAGE VIEW) */}
+        {/* TAB 4: DIGITAL JOURNAL & AI SMART FACE ALBUMS */}
         {activeTab === 'Journal' && (
           <View style={styles.tabContentContainer}>
-            {/* Journal Top Action Bar */}
             <View style={styles.journalActionRow}>
               <View>
                 <Text style={styles.journalMainHeading}>Digital Photo Stream</Text>
-                <Text style={styles.journalMainSub}>{photos.length} memories shared</Text>
+                <Text style={styles.journalMainSub}>{photos.length} moments shared</Text>
               </View>
               <TouchableOpacity
                 onPress={handleUploadPhoto}
@@ -619,10 +619,9 @@ export default function ItineraryDetailScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* iOS Style People Albums Horizontal Carousel */}
             <View style={styles.peopleAlbumBox}>
               <View style={styles.peopleHeaderRow}>
-                <Text style={styles.peopleSubLabel}>SMART FACE RECOGNITION</Text>
+                <Text style={styles.peopleSubLabel}>SMART FACE RECOGNITION (iOS STYLE)</Text>
                 {selectedAlbum && (
                   <TouchableOpacity onPress={() => setSelectedAlbum(null)}>
                     <Text style={styles.clearFilterText}>Show All Photos</Text>
@@ -664,20 +663,17 @@ export default function ItineraryDetailScreen() {
               </ScrollView>
             </View>
 
-            {/* AI Scanning Status Indicator */}
             {isScanning && (
               <View style={styles.scanningBanner}>
                 <Ionicons name="scan-outline" size={16} color="#0D9488" />
-                <Text style={styles.scanningText}>Detecting faces & updating personal albums...</Text>
+                <Text style={styles.scanningText}>Detecting faces & sorting into albums...</Text>
               </View>
             )}
 
-            {/* Photo Grid Header */}
             <Text style={styles.gridSectionHeader}>
               {selectedAlbum ? `Photos of ${selectedAlbum.name}` : 'Shared Trip Photos'}
             </Text>
 
-            {/* Photo Stream Grid */}
             <View style={styles.photoGrid}>
               {filteredPhotos.map((item) => (
                 <TouchableOpacity
@@ -1107,6 +1103,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
+  emergencyNavBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#FEE2E2',
+    paddingVertical: 6,
+    paddingHorizontal: 9,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  emergencyNavText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#DC2626',
+  },
   beaconButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1203,11 +1215,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: 16,
     marginBottom: 12,
-    gap: 8,
+    gap: 6,
   },
   tabItem: {
     paddingVertical: 7,
-    paddingHorizontal: 14,
+    paddingHorizontal: 13,
     borderRadius: 18,
     backgroundColor: '#F3F4F6',
   },
@@ -1681,7 +1693,49 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
 
-  /* JOURNAL TAB STYLES */
+  /* Emergency Quick Banner in Notes */
+  emergencyBannerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+    marginBottom: 12,
+    shadowColor: '#DC2626',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  emergencyBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    flex: 1,
+  },
+  sosShieldIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FEE2E2',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emergencyBannerTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  emergencyBannerSub: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginTop: 1,
+  },
+
+  /* Journal Tab Styling */
   journalActionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
