@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "TripManager",
-    "slug": "trip-manager",
+    "slug": "travel-planner",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -23,8 +23,9 @@
       "package": "com.aiburi.travelplanner"
     },
     "extra": {
+      "router": {},
       "eas": {
-        "projectId": "cff8c1dc-a436-44b2-bab5-e80bf580e322"
+        "projectId": "b35b0a49-73c0-41cd-bebd-b98af964a407"
       }
     },
     "plugins": [
@@ -42,16 +43,11 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "extra": {
-      "router": {},
-      "eas": {
-        "projectId": "b35b0a49-73c0-41cd-bebd-b98af964a407"
-      }
-    },
     "runtimeVersion": "1.0.0",
     "updates": {
       "url": "https://u.expo.dev/b35b0a49-73c0-41cd-bebd-b98af964a407",
       "enabled": true
-    }
+    },
+    "owner": "aiburi"
   }
 }
