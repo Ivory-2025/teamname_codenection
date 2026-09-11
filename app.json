@@ -1,14 +1,16 @@
 {
   "expo": {
-    "name": "travel-planner",
-    "slug": "travel-planner",
+    "name": "TripManager",
+    "slug": "trip-manager",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "travelplanner",
-    "userInterfaceStyle": "automatic",
-    "ios": {
-      "icon": "./assets/expo.icon"
+    "scheme": "tripmanager",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFFFFF"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,9 +22,10 @@
       "predictiveBackGestureEnabled": false,
       "package": "com.aiburi.travelplanner"
     },
-    "web": {
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+    "extra": {
+      "eas": {
+        "projectId": "cff8c1dc-a436-44b2-bab5-e80bf580e322"
+      }
     },
     "plugins": [
       "expo-router",
