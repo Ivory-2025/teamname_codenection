@@ -2,21 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
-  Alert,
-  Animated,
-  Image,
-  KeyboardAvoidingView,
-  Modal,
-  PanResponder,
-  Platform,
-  ScrollView,
-  Share,
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  UIManager,
-  View,
+    Alert,
+    Animated,
+    Image,
+    KeyboardAvoidingView,
+    Modal,
+    PanResponder,
+    Platform,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TextInput,
+    TouchableOpacity,
+    UIManager,
+    View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -25,14 +24,6 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 const CARD_HEIGHT = 112;
-
-interface MemberStatus {
-  id: string;
-  name: string;
-  avatar: string;
-  isReady: boolean;
-  tags: string[];
-}
 
 interface ActivityStop {
   id: string;
@@ -43,9 +34,6 @@ interface ActivityStop {
   rating: string;
   reviews: string;
   cost: string;
-  likes: number;
-  dislikes: number;
-  userReaction: 'like' | 'dislike' | null;
   image: string;
   isHotel?: boolean;
   googleReviewsData: {
@@ -54,14 +42,6 @@ interface ActivityStop {
     photos: string[];
     comments: { user: string; rating: string; text: string; time: string }[];
   };
-}
-
-interface PlanVariant {
-  id: string;
-  name: string;
-  tagline: string;
-  votes: number;
-  userVoted: boolean;
 }
 
 interface AlternativeSpot {
@@ -86,12 +66,12 @@ interface ChatMessage {
   text: string;
 }
 
-export default function PlanGroupScreen() {
+export default function ItineraryEditSoloScreen() {
   const router = useRouter();
   const [selectedDay, setSelectedDay] = useState(1);
   const [scrollEnabled, setScrollEnabled] = useState(true);
 
-  // Dual Start & End Time State
+  // Daily Pacing
   const [dayStartTime, setDayStartTime] = useState('09:00 AM');
   const [dayEndTime, setDayEndTime] = useState('09:00 PM');
   const [showTimeConfig, setShowTimeConfig] = useState(false);
@@ -99,38 +79,38 @@ export default function PlanGroupScreen() {
   // Payment Checkout Modal
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-  // Review Modals State
+  // Review Modals
   const [activeReviewStop, setActiveReviewStop] = useState<ActivityStop | null>(null);
   const [activeAltReviewSpot, setActiveAltReviewSpot] = useState<AlternativeSpot | null>(null);
 
-  // Alternative AI Suggestions Modal
+  // Alternative Suggestions
   const [showAlternativeModal, setShowAlternativeModal] = useState(false);
   const [activeAlternativeStopId, setActiveAlternativeStopId] = useState<string | null>(null);
 
-  // Add Custom Place Modal State
+  // Add Place Modal State
   const [showAddModal, setShowAddModal] = useState(false);
   const [customTitle, setCustomTitle] = useState('');
   const [customLocation, setCustomLocation] = useState('');
   const [customTime, setCustomTime] = useState('02:00 PM');
 
-  // Edit Stop Time Modal State
+  // Edit Time Modal State
   const [editingTimeStopId, setEditingTimeStopId] = useState<string | null>(null);
   const [newTimeInput, setNewTimeInput] = useState('');
 
-  // AI Group Travel Agent Chat Modal State
+  // AI Advisor
   const [showAiAdvisor, setShowAiAdvisor] = useState(false);
   const [advisorInput, setAdvisorInput] = useState('');
   const [advisorMessages, setAdvisorMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       sender: 'ai',
-      text: 'Hello group! You can tap on any time badge to customize the schedule for each stop!',
+      text: 'Hello solo explorer! I am your AI Travel Agent. You can tap on any time badge to adjust the schedule!',
     },
   ]);
 
   const alternativesList: AlternativeSpot[] = [
     { 
-      id: 'alt-1',
+      id: 'alt-solo-1',
       title: 'Fushimi Inari Hidden Trail & Shrine', 
       location: 'Fushimi Ward, Kyoto', 
       rating: '4.9★', 
@@ -145,12 +125,12 @@ export default function PlanGroupScreen() {
           'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400',
         ],
         comments: [
-          { user: 'Marcus T.', rating: '★★★★★', text: 'Mesmerizing red gates winding up the forested mountain. Best hiked early morning!', time: '2 days ago' },
+          { user: 'Marcus T.', rating: '★★★★★', text: 'Mesmerizing red gates winding up the mountain.', time: '2 days ago' },
         ],
       },
     },
     { 
-      id: 'alt-2',
+      id: 'alt-solo-2',
       title: 'Philosophers Path & Canal Walk', 
       location: 'Northern Higashiyama', 
       rating: '4.7★', 
@@ -170,72 +150,34 @@ export default function PlanGroupScreen() {
     },
   ];
 
-  const [members, setMembers] = useState<MemberStatus[]>([
-    { id: '1', name: 'Ivory (You)', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120', isReady: true, tags: ['#Chill', '#CafeHopping', '#Halal'] },
-    { id: '2', name: 'Chin Jie', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120', isReady: true, tags: ['#Photography', '#Chill', '#Halal'] },
-    { id: '3', name: 'ZhiHeng', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120', isReady: false, tags: [] },
-    { id: '4', name: 'Sarah', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120', isReady: false, tags: [] },
-  ]);
-
-  const [polls, setPolls] = useState<PlanVariant[]>([
-    { id: 'v1', name: 'Option A: Relaxed Cultural Flow', tagline: 'Late morning starts, scenic tea houses, minimal transit stress', votes: 3, userVoted: true },
-    { id: 'v2', name: 'Option B: Dynamic City Discovery', tagline: 'Early markets, photography spots, specialty cafe hops', votes: 1, userVoted: false },
-  ]);
-
-  const [timelineStops, setTimelineStops] = useState<Record<number, ActivityStop[]>>({
+  const [stopsByDay, setStopsByDay] = useState<Record<number, ActivityStop[]>>({
     1: [
       {
-        id: 'st-1',
+        id: '1',
         time: '09:00 AM',
-        title: 'Nishiki Market Specialty Food Crawl',
-        category: 'Food & Cafes',
+        title: 'Solo Coffee & Matcha Roast',
+        category: 'Cafe',
         location: 'Nakagyo Ward, Kyoto',
-        rating: '4.5★',
-        reviews: '18.9k reviews',
-        cost: '¥1,800',
-        likes: 3,
-        dislikes: 1,
-        userReaction: null,
+        rating: '4.6★',
+        reviews: '4.2k reviews',
+        cost: '¥850',
         image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400',
         googleReviewsData: {
-          starRating: '4.5 / 5.0',
-          totalReviews: '18,900 Google Reviews',
+          starRating: '4.6 / 5.0',
+          totalReviews: '4,200 Google Reviews',
           photos: ['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400'],
-          comments: [{ user: 'Kenji S.', rating: '★★★★★', text: 'Fresh seafood skewers and soy donuts!', time: '1 week ago' }],
+          comments: [{ user: 'Sarah L.', rating: '★★★★★', text: 'Cozy artisanal cafe with great pour-overs.', time: '4 days ago' }],
         },
       },
       {
-        id: 'st-2',
+        id: 'hotel-checkin-stop',
         time: '11:45 AM',
-        title: 'Arashiyama Bamboo Grove & Riverside',
-        category: 'Sightseeing',
-        location: 'Ukyo Ward, Kyoto',
-        rating: '4.7★',
-        reviews: '32.4k reviews',
-        cost: 'Free',
-        likes: 4,
-        dislikes: 0,
-        userReaction: 'like',
-        image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400',
-        googleReviewsData: {
-          starRating: '4.7 / 5.0',
-          totalReviews: '32,400 Google Reviews',
-          photos: ['https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400'],
-          comments: [{ user: 'Daniel W.', rating: '★★★★★', text: 'Stunning bamboo forest walk.', time: 'Yesterday' }],
-        },
-      },
-      {
-        id: 'st-hotel',
-        time: '02:30 PM',
         title: 'Hotel Check-In: Traders Hotel KL',
         category: 'Hotel Stay',
         location: 'KLCC Park View • 0.2 km from center',
         rating: '4.8★',
-        reviews: '2,410 reviews',
+        reviews: '2.4k reviews',
         cost: 'RM 400',
-        likes: 4,
-        dislikes: 0,
-        userReaction: 'like',
         isHotel: true,
         image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600',
         googleReviewsData: {
@@ -245,26 +187,42 @@ export default function PlanGroupScreen() {
             'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600',
             'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600',
           ],
-          comments: [{ user: 'Jonathan L.', rating: '★★★★★', text: 'Spectacular twin towers view!', time: '2 days ago' }],
+          comments: [{ user: 'Jonathan L.', rating: '★★★★★', text: 'Unbeatable views of the Petronas Twin Towers.', time: '2 days ago' }],
+        },
+      },
+      {
+        id: '3',
+        time: '02:30 PM',
+        title: 'Kiyomizu-dera Early Walk',
+        category: 'Sightseeing',
+        location: 'Higashiyama Ward, Kyoto',
+        rating: '4.8★',
+        reviews: '41k reviews',
+        cost: '¥400',
+        image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400',
+        googleReviewsData: {
+          starRating: '4.8 / 5.0',
+          totalReviews: '41,000 Google Reviews',
+          photos: ['https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400'],
+          comments: [{ user: 'Alex R.', rating: '★★★★★', text: 'Incredible wooden stage overlooking maple trees.', time: '2 days ago' }],
         },
       },
     ],
   });
 
-  const currentStops = timelineStops[selectedDay] || [];
-  const readyCount = members.filter((m) => m.isReady).length;
+  const currentStops = stopsByDay[selectedDay] || [];
 
   const handleSwap = (fromIdx: number, toIdx: number) => {
     const updated = [...currentStops];
     const [moved] = updated.splice(fromIdx, 1);
     updated.splice(toIdx, 0, moved);
-    setTimelineStops((prev) => ({ ...prev, [selectedDay]: updated }));
+    setStopsByDay((prev) => ({ ...prev, [selectedDay]: updated }));
   };
 
   const handleApplyAlternative = (alt: AlternativeSpot) => {
     if (!activeAlternativeStopId) return;
 
-    setTimelineStops((prev) => {
+    setStopsByDay((prev) => {
       const current = prev[selectedDay] || [];
       const updated = current.map((s) => {
         if (s.id !== activeAlternativeStopId) return s;
@@ -283,7 +241,7 @@ export default function PlanGroupScreen() {
     });
 
     setShowAlternativeModal(false);
-    Alert.alert('Destination Swapped ✨', 'AI successfully updated your route with the selected alternative.');
+    Alert.alert('Destination Swapped ✨', 'AI successfully updated your solo itinerary.');
   };
 
   const handleResolvePlaceGps = () => {
@@ -306,7 +264,7 @@ export default function PlanGroupScreen() {
     }
 
     setCustomLocation(detectedCoord);
-    Alert.alert('Place GPS Acquired 📍', `Resolved exact geo-coordinates for "${customTitle.trim()}".`);
+    Alert.alert('Place GPS Acquired 📍', `Resolved exact coordinates for "${customTitle.trim()}".`);
   };
 
   const handleAddCustomPlace = () => {
@@ -323,18 +281,15 @@ export default function PlanGroupScreen() {
       rating: '4.8★',
       reviews: 'Custom Spot',
       cost: 'Free',
-      likes: 1,
-      dislikes: 0,
-      userReaction: 'like',
       image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400',
       googleReviewsData: {
         starRating: '4.8 / 5.0',
         totalReviews: 'User Added Spot',
         photos: ['https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400'],
-        comments: [{ user: 'You', rating: '★★★★★', text: 'Added to group route.', time: 'Just now' }],
+        comments: [{ user: 'You', rating: '★★★★★', text: 'Added to itinerary.', time: 'Just now' }],
       },
     };
-    setTimelineStops((prev) => ({
+    setStopsByDay((prev) => ({
       ...prev,
       [selectedDay]: [...(prev[selectedDay] || []), newStop],
     }));
@@ -346,7 +301,7 @@ export default function PlanGroupScreen() {
   // Direct Time Save Handler
   const handleSaveEditedTime = () => {
     if (!editingTimeStopId || !newTimeInput.trim()) return;
-    setTimelineStops((prev) => ({
+    setStopsByDay((prev) => ({
       ...prev,
       [selectedDay]: prev[selectedDay].map((s) => (s.id === editingTimeStopId ? { ...s, time: newTimeInput.trim() } : s)),
     }));
@@ -361,71 +316,19 @@ export default function PlanGroupScreen() {
     setAdvisorInput('');
 
     setTimeout(() => {
-      let reply = 'Option A matches everyone best! Average daily spending stands at ¥3,050/person.';
-      if (userText.toLowerCase().includes('halal') || userText.toLowerCase().includes('food')) {
-        reply = 'Ayam-YA Karasuma and Naritaya Gion are both 10 minutes from your scheduled stops and certified Halal.';
-      } else if (userText.toLowerCase().includes('crowd') || userText.toLowerCase().includes('busy')) {
-        reply = 'Visiting Nishiki Market before 11:30 AM avoids peak tourist crowd density.';
+      let reply = 'Your solo pacing is optimized for quiet mornings and scenic photography!';
+      if (userText.toLowerCase().includes('pass') || userText.toLowerCase().includes('transit')) {
+        reply = 'The Kansai Thru Pass or ICOCA card will cover all your solo train and bus transits seamlessly.';
+      } else if (userText.toLowerCase().includes('safe') || userText.toLowerCase().includes('solo')) {
+        reply = 'Kyoto is one of the safest cities worldwide for solo travelers, even during evening walks.';
       }
       setAdvisorMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'ai', text: reply }]);
     }, 700);
   };
 
-  const handleShareInvite = async () => {
-    try {
-      await Share.share({
-        message: 'Join our trip workspace on Escape to review the route and vote: app.escape.io/join/kansai-2026',
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleNudge = (name: string) => {
-    Alert.alert('Reminder Sent 🔔', `Sent an instant ping to ${name} to finish selecting tags.`);
-  };
-
-  const handleVoteVariant = (id: string) => {
-    setPolls((prev) =>
-      prev.map((p) => {
-        if (p.id === id) {
-          return { ...p, votes: p.userVoted ? p.votes - 1 : p.votes + 1, userVoted: !p.userVoted };
-        }
-        return { ...p, votes: p.userVoted ? p.votes - 1 : p.votes, userVoted: false };
-      })
-    );
-  };
-
-  const handleReaction = (stopId: string, type: 'like' | 'dislike') => {
-    setTimelineStops((prev) => {
-      const current = prev[selectedDay] || [];
-      const updated = current.map((stop) => {
-        if (stop.id !== stopId) return stop;
-        let likes = stop.likes;
-        let dislikes = stop.dislikes;
-
-        if (stop.userReaction === type) {
-          if (type === 'like') likes--;
-          if (type === 'dislike') dislikes--;
-          return { ...stop, likes, dislikes, userReaction: null };
-        } else {
-          if (type === 'like') {
-            likes++;
-            if (stop.userReaction === 'dislike') dislikes--;
-          } else {
-            dislikes++;
-            if (stop.userReaction === 'like') likes--;
-          }
-          return { ...stop, likes, dislikes, userReaction: type };
-        }
-      });
-      return { ...prev, [selectedDay]: updated };
-    });
-  };
-
-  const handleFinalizeGroupPayment = () => {
+  const handleFinalizePayment = () => {
     setShowPaymentModal(false);
-    Alert.alert('Group Booking Completed! 💳🎉', 'Itinerary is locked and all group reservation vouchers are saved.');
+    Alert.alert('Payment Completed! 💳🎉', 'Itinerary is officially locked and all vouchers are saved in your digital vault.');
   };
 
   return (
@@ -435,85 +338,15 @@ export default function PlanGroupScreen() {
           <Ionicons name="arrow-back" size={20} color="#111827" />
         </TouchableOpacity>
         <View style={styles.titleBox}>
-          <Text style={styles.topBarTitle}>Group Route Studio</Text>
-          <Text style={styles.topBarSub}>4 Collaborators Active • AI Optimized</Text>
+          <Text style={styles.topBarTitle}>Solo Itinerary Studio</Text>
+          <Text style={styles.topBarSub}>Personal Trip Pacing • Hotel Integrated</Text>
         </View>
-        <TouchableOpacity onPress={handleShareInvite} style={styles.inviteSharePill}>
-          <Ionicons name="share-social-outline" size={13} color="#0D9488" />
-          <Text style={styles.inviteSharePillText}>Invite</Text>
-        </TouchableOpacity>
+        <View style={styles.soloBadge}>
+          <Text style={styles.soloBadgeText}>SOLO TRIP</Text>
+        </View>
       </View>
 
       <ScrollView scrollEnabled={scrollEnabled} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-        {/* MEMBERS INTEREST TAG PROGRESS */}
-        <View style={styles.topStatusSection}>
-          <View style={styles.cardBox}>
-            <View style={styles.cardHeaderRow}>
-              <Text style={styles.cardHeaderTitle}>ROUTE VARIANT VOTING</Text>
-              <View style={styles.liveVoteBadge}>
-                <Text style={styles.liveVoteBadgeText}>ACTIVE POLL</Text>
-              </View>
-            </View>
-            {polls.map((p) => (
-              <TouchableOpacity
-                key={p.id}
-                style={[styles.pollCard, p.userVoted && styles.pollCardActive]}
-                onPress={() => handleVoteVariant(p.id)}
-                activeOpacity={0.85}
-              >
-                <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={[styles.pollTitle, p.userVoted && styles.pollTitleActive]}>{p.name}</Text>
-                  <Text style={styles.pollSub}>{p.tagline}</Text>
-                </View>
-                <View style={[styles.votePill, p.userVoted && styles.votePillActive]}>
-                  <Ionicons name="thumbs-up" size={12} color={p.userVoted ? '#FFFFFF' : '#0D9488'} />
-                  <Text style={[styles.voteCount, p.userVoted && styles.voteCountActive]}>{p.votes}</Text>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.cardBox}>
-            <View style={styles.cardHeaderRow}>
-              <Text style={styles.cardHeaderTitle}>MEMBER SURVEY & TAG PROGRESS</Text>
-              <Text style={styles.memberRatioText}>{readyCount}/{members.length} Ready</Text>
-            </View>
-
-            {members.map((m) => (
-              <View key={m.id} style={styles.memberRow}>
-                <Image source={{ uri: m.avatar }} style={styles.avatarImg} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.memberName}>{m.name}</Text>
-                  <Text style={m.isReady ? styles.readyText : styles.pendingText}>
-                    {m.isReady ? `✓ Tags: ${m.tags.join(', ')}` : '⏳ Selecting preferences'}
-                  </Text>
-                </View>
-
-                {!m.isReady ? (
-                  <TouchableOpacity onPress={() => handleNudge(m.name)} style={styles.nudgeBtn}>
-                    <Ionicons name="notifications-outline" size={12} color="#D97706" />
-                    <Text style={styles.nudgeText}>Nudge</Text>
-                  </TouchableOpacity>
-                ) : (
-                  <View style={styles.doneCircle}>
-                    <Ionicons name="checkmark" size={12} color="#0D9488" />
-                  </View>
-                )}
-              </View>
-            ))}
-
-            <View style={styles.consensusBoxInline}>
-              <Text style={styles.consensusHeading}>🔥 GROUP CONSENSUS TAGS</Text>
-              <View style={styles.tagWrap}>
-                <View style={styles.consensusTag}><Text style={styles.consensusTagText}>#Chill (2/2)</Text></View>
-                <View style={styles.consensusTag}><Text style={styles.consensusTagText}>#CafeHopping (2/2)</Text></View>
-                <View style={styles.consensusTag}><Text style={styles.consensusTagText}>#Halal (2/2)</Text></View>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* HOTEL BANNER & DUAL TIME CONFIGURATION */}
         <View style={styles.milestoneCard}>
           <View style={styles.milestoneRow}>
             <View style={styles.milestoneItem}>
@@ -564,7 +397,6 @@ export default function PlanGroupScreen() {
           </View>
         )}
 
-        {/* Day Selector */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.dayScroll}>
           {[1, 2, 3, 4, 5, 6, 7].map((d) => (
             <TouchableOpacity
@@ -579,7 +411,7 @@ export default function PlanGroupScreen() {
 
         <View style={styles.sectionHeaderRow}>
           <View style={{ flex: 1, paddingRight: 8 }}>
-            <Text style={styles.timelineDayTitle}>Day {selectedDay} Proposed Route</Text>
+            <Text style={styles.timelineDayTitle}>Day {selectedDay} Proposed Itinerary</Text>
             <Text style={styles.sectionHint}>Tap any time badge (e.g. 9:00 AM ✎) to edit visit time</Text>
           </View>
           <TouchableOpacity onPress={() => setShowAddModal(true)} style={styles.addStopBtn}>
@@ -591,7 +423,7 @@ export default function PlanGroupScreen() {
         {/* Stops List */}
         <View style={styles.stopsList}>
           {currentStops.map((stop, index) => (
-            <InteractiveGroupDragCard
+            <InteractiveSoloDragCard
               key={stop.id}
               item={stop}
               index={index}
@@ -606,29 +438,20 @@ export default function PlanGroupScreen() {
                 setActiveAlternativeStopId(stop.id);
                 setShowAlternativeModal(true);
               }}
-              onReaction={handleReaction}
               setScrollEnabled={setScrollEnabled}
             />
           ))}
         </View>
 
-        {/* Finalize Route Card */}
-        <View style={styles.lockNoticeCard}>
-          <View style={styles.lockNoticeLeft}>
-            <Ionicons name="shield-checkmark" size={20} color="#0D9488" />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.lockNoticeTitle}>Ready to Finalize Route?</Text>
-              <Text style={styles.lockNoticeSub}>Lock in group schedule and complete booking payment.</Text>
-            </View>
-          </View>
-          <TouchableOpacity style={styles.lockMainBtn} onPress={() => setShowPaymentModal(true)}>
-            <Ionicons name="card" size={15} color="#FFFFFF" />
-            <Text style={styles.lockMainBtnText}>Lock Itinerary & Proceed to Payment 💳</Text>
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={styles.lockBtn} 
+          onPress={() => setShowPaymentModal(true)}
+        >
+          <Ionicons name="lock-closed" size={16} color="#FFFFFF" />
+          <Text style={styles.lockBtnText}>Lock Itinerary & Proceed to Payment 💳</Text>
+        </TouchableOpacity>
       </ScrollView>
 
-      {/* FLOATING AI TRAVEL AGENT TRIGGER */}
       <TouchableOpacity
         style={styles.floatingAiButton}
         activeOpacity={0.85}
@@ -683,7 +506,7 @@ export default function PlanGroupScreen() {
           <View style={styles.modalSheet}>
             <View style={styles.sheetHandle} />
             <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle}>Confirm & Pay Group Itinerary</Text>
+              <Text style={styles.modalTitle}>Confirm & Pay Itinerary</Text>
               <TouchableOpacity onPress={() => setShowPaymentModal(false)} style={styles.circleCloseBtn}>
                 <Ionicons name="close" size={18} color="#4B5563" />
               </TouchableOpacity>
@@ -691,8 +514,8 @@ export default function PlanGroupScreen() {
 
             <View style={styles.checkoutBreakdown}>
               <View style={styles.checkoutRow}>
-                <Text style={styles.checkoutItemName}>✈️ Batik Air OD612 (Group Flights)</Text>
-                <Text style={styles.checkoutItemPrice}>RM 390 / pax</Text>
+                <Text style={styles.checkoutItemName}>✈️ Batik Air OD612 (Flight)</Text>
+                <Text style={styles.checkoutItemPrice}>RM 390</Text>
               </View>
               <View style={styles.checkoutRow}>
                 <Text style={styles.checkoutItemName}>🏨 Traders Hotel KL (Lodging)</Text>
@@ -704,7 +527,7 @@ export default function PlanGroupScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.confirmPayBtn} onPress={handleFinalizeGroupPayment}>
+            <TouchableOpacity style={styles.confirmPayBtn} onPress={handleFinalizePayment}>
               <Ionicons name="card" size={18} color="#FFFFFF" />
               <Text style={styles.confirmPayBtnText}>Pay RM 790 with Apple Pay / Card</Text>
             </TouchableOpacity>
@@ -712,7 +535,7 @@ export default function PlanGroupScreen() {
         </View>
       </Modal>
 
-      {/* RICH GOOGLE REVIEWS MODAL */}
+      {/* REVIEWS MODAL */}
       <Modal visible={!!activeReviewStop} transparent animationType="slide" onRequestClose={() => setActiveReviewStop(null)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalSheetLarge}>
@@ -757,65 +580,6 @@ export default function PlanGroupScreen() {
 
                 <TouchableOpacity style={[styles.modalSaveBtn, { marginTop: 16 }]} onPress={() => setActiveReviewStop(null)}>
                   <Text style={styles.modalSaveBtnText}>Close & Return to Studio</Text>
-                </TouchableOpacity>
-              </ScrollView>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* RICH GOOGLE REVIEWS MODAL FOR ALTERNATIVE SUGGESTIONS */}
-      <Modal visible={!!activeAltReviewSpot} transparent animationType="slide" onRequestClose={() => setActiveAltReviewSpot(null)}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalSheetLarge}>
-            <View style={styles.sheetHandle} />
-            {activeAltReviewSpot && (
-              <ScrollView showsVerticalScrollIndicator={false}>
-                <View style={styles.modalHeaderRow}>
-                  <Text style={styles.modalTitle} numberOfLines={1}>{activeAltReviewSpot.title}</Text>
-                  <TouchableOpacity onPress={() => setActiveAltReviewSpot(null)} style={styles.circleCloseBtn}>
-                    <Ionicons name="close" size={18} color="#4B5563" />
-                  </TouchableOpacity>
-                </View>
-                
-                <Image source={{ uri: activeAltReviewSpot.image }} style={styles.reviewModalImage} />
-
-                <View style={styles.googleRatingBox}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                    <Ionicons name="logo-google" size={18} color="#4285F4" />
-                    <Text style={styles.googleRatingText}>{activeAltReviewSpot.googleReviewsData.starRating}</Text>
-                  </View>
-                  <Text style={styles.reviewCountText}>{activeAltReviewSpot.googleReviewsData.totalReviews}</Text>
-                </View>
-
-                <Text style={styles.fieldLabel}>VISITOR PHOTO GALLERY</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 14 }}>
-                  {activeAltReviewSpot.googleReviewsData.photos.map((p, idx) => (
-                    <Image key={idx} source={{ uri: p }} style={styles.galleryPhoto} />
-                  ))}
-                </ScrollView>
-
-                <Text style={styles.fieldLabel}>VERIFIED REVIEWS & COMMENTS</Text>
-                {activeAltReviewSpot.googleReviewsData.comments.map((c, idx) => (
-                  <View key={idx} style={styles.commentCard}>
-                    <View style={styles.commentTopRow}>
-                      <Text style={styles.commentUser}>{c.user}</Text>
-                      <Text style={styles.commentStars}>{c.rating}</Text>
-                    </View>
-                    <Text style={styles.commentText}>{c.text}</Text>
-                    <Text style={styles.commentTime}>{c.time}</Text>
-                  </View>
-                ))}
-
-                <TouchableOpacity 
-                  style={[styles.modalSaveBtn, { marginTop: 16 }]} 
-                  onPress={() => {
-                    const spotToSwap = activeAltReviewSpot;
-                    setActiveAltReviewSpot(null);
-                    handleApplyAlternative(spotToSwap);
-                  }}
-                >
-                  <Text style={styles.modalSaveBtnText}>Swap to Itinerary Now ✨</Text>
                 </TouchableOpacity>
               </ScrollView>
             )}
@@ -940,7 +704,7 @@ export default function PlanGroupScreen() {
               <TextInput
                 value={advisorInput}
                 onChangeText={setAdvisorInput}
-                placeholder="Ask about budget split, Halal food, crowd tips..."
+                placeholder="Ask about solo transit, safety, photography spots..."
                 placeholderTextColor="#9CA3AF"
                 style={styles.agentInputField}
               />
@@ -955,7 +719,7 @@ export default function PlanGroupScreen() {
   );
 }
 
-function InteractiveGroupDragCard({
+function InteractiveSoloDragCard({
   item,
   index,
   totalItems,
@@ -963,7 +727,6 @@ function InteractiveGroupDragCard({
   onPressCard,
   onPressTime,
   onOpenAlternative,
-  onReaction,
   setScrollEnabled,
 }: {
   item: ActivityStop;
@@ -973,7 +736,6 @@ function InteractiveGroupDragCard({
   onPressCard: () => void;
   onPressTime: () => void;
   onOpenAlternative: () => void;
-  onReaction: (id: string, type: 'like' | 'dislike') => void;
   setScrollEnabled: (enabled: boolean) => void;
 }) {
   const pan = useRef(new Animated.ValueXY()).current;
@@ -984,6 +746,7 @@ function InteractiveGroupDragCard({
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
+      // Only drag if moved vertically beyond 10 units
       onMoveShouldSetPanResponder: (_, gestureState) => Math.abs(gestureState.dy) > 10,
       onPanResponderGrant: () => {
         setIsDragging(true);
@@ -1054,32 +817,6 @@ function InteractiveGroupDragCard({
           </View>
           <Text style={styles.stopTitle} numberOfLines={1}>{item.title}</Text>
           <Text style={styles.stopLocation} numberOfLines={1}>📍 {item.location} • <Text style={{ color: '#F59E0B', fontWeight: '700' }}>{item.rating}</Text></Text>
-
-          {!item.isHotel && (
-            <View style={styles.opinionVoteRow}>
-              <Text style={styles.opinionLabel}>Group opinion:</Text>
-              <View style={styles.reactionGroup}>
-                <TouchableOpacity
-                  onPress={(e) => { e.stopPropagation(); onReaction(item.id, 'like'); }}
-                  style={[styles.reactionBtn, item.userReaction === 'like' && styles.reactionBtnLikeActive]}
-                >
-                  <Ionicons name="thumbs-up" size={11} color={item.userReaction === 'like' ? '#FFFFFF' : '#10B981'} />
-                  <Text style={[styles.reactionCountText, item.userReaction === 'like' && styles.reactionCountActive]}>
-                    {item.likes}
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={(e) => { e.stopPropagation(); onReaction(item.id, 'dislike'); }}
-                  style={[styles.reactionBtn, item.userReaction === 'dislike' && styles.reactionBtnDislikeActive]}
-                >
-                  <Ionicons name="thumbs-down" size={11} color={item.userReaction === 'dislike' ? '#FFFFFF' : '#EF4444'} />
-                  <Text style={[styles.reactionCountText, item.userReaction === 'dislike' && styles.reactionCountActive]}>
-                    {item.dislikes}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          )}
         </View>
 
         <View style={styles.cardActionsColumn}>
@@ -1115,79 +852,9 @@ const styles = StyleSheet.create({
   titleBox: { flex: 1, marginLeft: 12 },
   topBarTitle: { fontSize: 16, fontWeight: '800', color: '#111827' },
   topBarSub: { fontSize: 11, color: '#6B7280' },
-  inviteSharePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#CCFBF1',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  inviteSharePillText: { fontSize: 11, fontWeight: '700', color: '#0D9488' },
+  soloBadge: { backgroundColor: '#E0E7FF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  soloBadgeText: { fontSize: 10, fontWeight: '800', color: '#4338CA' },
   scrollContent: { padding: 16, paddingBottom: 220 },
-  topStatusSection: { marginBottom: 14 },
-  cardBox: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 10 },
-  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  cardHeaderTitle: { fontSize: 10, fontWeight: '800', color: '#6B7280', letterSpacing: 0.6 },
-  liveVoteBadge: { backgroundColor: '#FEF3C7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  liveVoteBadgeText: { fontSize: 9, fontWeight: '800', color: '#B45309' },
-  memberRatioText: { fontSize: 11, fontWeight: '800', color: '#0D9488' },
-  pollCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginBottom: 8,
-  },
-  pollCardActive: { borderColor: '#0D9488', backgroundColor: '#F0FDFA' },
-  pollTitle: { fontSize: 13, fontWeight: '700', color: '#374151' },
-  pollTitleActive: { color: '#0D9488', fontWeight: '800' },
-  pollSub: { fontSize: 10, color: '#6B7280', marginTop: 2 },
-  votePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#CCFBF1',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  votePillActive: { backgroundColor: '#0D9488' },
-  voteCount: { fontSize: 11, fontWeight: '800', color: '#0D9488' },
-  voteCountActive: { color: '#FFFFFF' },
-  memberRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#F3F4F6',
-    gap: 10,
-  },
-  avatarImg: { width: 32, height: 32, borderRadius: 16 },
-  memberName: { fontSize: 13, fontWeight: '700', color: '#111827' },
-  readyText: { fontSize: 10, color: '#0D9488', fontWeight: '600' },
-  pendingText: { fontSize: 10, color: '#D97706', fontWeight: '600' },
-  nudgeBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-  },
-  nudgeText: { fontSize: 10, fontWeight: '700', color: '#B45309' },
-  doneCircle: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#CCFBF1', alignItems: 'center', justifyContent: 'center' },
-  consensusBoxInline: { backgroundColor: '#EEF2FF', borderRadius: 12, padding: 10, marginTop: 10 },
-  consensusHeading: { fontSize: 9, fontWeight: '800', color: '#4338CA', letterSpacing: 0.5, marginBottom: 4 },
-  tagWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  consensusTag: { backgroundColor: '#4338CA', paddingHorizontal: 7, paddingVertical: 3, borderRadius: 6 },
-  consensusTagText: { color: '#FFFFFF', fontSize: 9, fontWeight: '700' },
   milestoneCard: { 
     backgroundColor: '#F0FDFA', 
     borderRadius: 14, 
@@ -1238,7 +905,7 @@ const styles = StyleSheet.create({
     color: '#FFFFFF' 
   },
   timeConfigDropdown: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#E5E7EB' },
-  configHeading: { fontSize: 12, fontWeight: '800', color: '#111827', marginBottom: 8 },
+  configHeading: { fontSize: 12, fontWeight: '800', color: '#111827' },
   configRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
   configLabel: { fontSize: 11, fontWeight: '700', color: '#6B7280', width: 70 },
   timeOptionPill: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, backgroundColor: '#F3F4F6' },
@@ -1303,55 +970,21 @@ const styles = StyleSheet.create({
   stopCategoryText: { fontSize: 9, color: '#6B7280' },
   stopTitle: { fontSize: 13, fontWeight: '700', color: '#111827', marginTop: 1 },
   stopLocation: { fontSize: 10, color: '#6B7280', marginTop: 2 },
-  opinionVoteRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 6,
-    paddingTop: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderColor: '#F3F4F6',
-  },
-  opinionLabel: { fontSize: 9, color: '#9CA3AF' },
-  reactionGroup: { flexDirection: 'row', gap: 6 },
-  reactionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    backgroundColor: '#F9FAFB',
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  reactionBtnLikeActive: { backgroundColor: '#10B981', borderColor: '#10B981' },
-  reactionBtnDislikeActive: { backgroundColor: '#EF4444', borderColor: '#EF4444' },
-  reactionCountText: { fontSize: 10, fontWeight: '700', color: '#4B5563' },
-  reactionCountActive: { color: '#FFFFFF' },
   cardActionsColumn: { alignItems: 'center', paddingRight: 10, gap: 8 },
   iconActionBtn: { padding: 7, borderRadius: 8, backgroundColor: '#F0FDFA' },
   dragIndicator: { padding: 4 },
-  lockNoticeCard: { 
-    backgroundColor: '#0F172A', 
-    borderRadius: 18, 
-    padding: 16, 
-    marginTop: 10,
-    marginBottom: 20 
-  },
-  lockNoticeLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
-  lockNoticeTitle: { fontSize: 13, fontWeight: '800', color: '#FFFFFF' },
-  lockNoticeSub: { fontSize: 10.5, color: '#94A3B8', marginTop: 1 },
-  lockMainBtn: {
+  lockBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 8,
     backgroundColor: '#0D9488',
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 14,
+    borderRadius: 16,
+    marginTop: 10,
+    marginBottom: 20,
   },
-  lockMainBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
+  lockBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   floatingAiButton: {
     position: 'absolute',
     bottom: 96,

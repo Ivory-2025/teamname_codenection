@@ -4,12 +4,11 @@ import { useState } from 'react';
 import {
   Dimensions,
   ScrollView,
-  Share,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -50,21 +49,16 @@ export default function AIPlannerScreen() {
   const [plannerMode, setPlannerMode] = useState<'idle' | 'wizard'>('idle');
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
 
-  // Setup Form
   const [tripType, setTripType] = useState<'Group' | 'Solo'>('Group');
   const [tripName, setTripName] = useState('Autumn in Kansai');
   const [destination, setDestination] = useState('Kyoto & Osaka, Japan');
 
-  // Calendar
   const [showCalendar, setShowCalendar] = useState(false);
   const [startDate, setStartDate] = useState<number>(14);
   const [endDate, setEndDate] = useState<number>(20);
 
-  // Tags & Budgets
-  const [selectedTags, setSelectedTags] = useState<string[]>(['#Chill', '#CafeHopping']);
+  const [selectedTags, setSelectedTags] = useState<string[]>(['#Chill', '#CafeHopping', '#Halal']);
   const [stayLimit, setStayLimit] = useState('250');
-  const [transitCap, setTransitCap] = useState('40');
-  const [dailyLiving, setDailyLiving] = useState('120');
 
   const handleDatePress = (day: number) => {
     if (day < startDate) {
@@ -72,7 +66,6 @@ export default function AIPlannerScreen() {
       setEndDate(day + 3);
     } else {
       setEndDate(day);
-      // Keeps calendar open so user can review or tap dates again
     }
   };
 
@@ -84,28 +77,16 @@ export default function AIPlannerScreen() {
     }
   };
 
-  const handleShareInvite = async () => {
-    try {
-      await Share.share({
-        message: `Join our trip "${tripName}" on Escape! app.escape.io/join/kansai-2026`,
-      });
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const handleFinishWizard = () => {
     setPlannerMode('idle');
-    if (tripType === 'Solo') {
-      router.push('/plan-solo' as any);
-    } else {
-      router.push('/plan-group' as any);
-    }
+    router.push({
+      pathname: '/BookingSelectionScreen',
+      params: { mode: tripType === 'Solo' ? 'solo' : 'group' },
+    } as any);
   };
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      {/* Top Bar */}
       <View style={styles.topBar}>
         <View style={styles.topBarLeft}>
           <Ionicons name="sparkles" size={18} color="#0D9488" />
@@ -124,7 +105,7 @@ export default function AIPlannerScreen() {
 
           <Text style={styles.emptyTitle}>Create a New Travel Plan</Text>
           <Text style={styles.emptySubtitle}>
-            Configure your trip preferences (Solo vs. Group), pick dates on the calendar, set your budget limits, and generate a customized route.
+            Configure your trip preferences, pick dates on the calendar, set your budget limits, and generate a customized route.
           </Text>
 
           <TouchableOpacity
@@ -140,7 +121,6 @@ export default function AIPlannerScreen() {
           </TouchableOpacity>
         </View>
       ) : (
-        /* FULL-SCREEN WIZARD */
         <View style={styles.flexOne}>
           <View style={styles.wizardTopBar}>
             <TouchableOpacity
@@ -171,7 +151,6 @@ export default function AIPlannerScreen() {
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.wizardScrollContent}>
-            {/* STEP 1: SOLO VS GROUP & DATES */}
             {wizardStep === 1 && (
               <View>
                 <Text style={styles.stepTitle}>Who is Traveling & When?</Text>
@@ -179,7 +158,6 @@ export default function AIPlannerScreen() {
                   Select Solo if planning alone, or Group to invite travel buddies for collaborative polling.
                 </Text>
 
-                {/* Solo vs Group Toggle */}
                 <Text style={styles.fieldLabel}>TRAVEL MODE</Text>
                 <View style={styles.modeToggleContainer}>
                   <TouchableOpacity
@@ -191,7 +169,6 @@ export default function AIPlannerScreen() {
                       <Ionicons name="person" size={20} color={tripType === 'Solo' ? '#FFFFFF' : '#4B5563'} />
                     </View>
                     <Text style={[styles.modeTitle, tripType === 'Solo' && styles.modeTitleActive]}>Solo Trip</Text>
-                    <Text style={styles.modeSub}>Fast personalized AI plan</Text>
                   </TouchableOpacity>
 
                   <TouchableOpacity
@@ -203,25 +180,14 @@ export default function AIPlannerScreen() {
                       <Ionicons name="people" size={20} color={tripType === 'Group' ? '#FFFFFF' : '#4B5563'} />
                     </View>
                     <Text style={[styles.modeTitle, tripType === 'Group' && styles.modeTitleActive]}>Group Trip</Text>
-                    <Text style={styles.modeSub}>Alignment, voting & polls</Text>
                   </TouchableOpacity>
                 </View>
 
                 <Text style={styles.fieldLabel}>TRIP NAME</Text>
-                <TextInput
-                  value={tripName}
-                  onChangeText={setTripName}
-                  style={styles.fullScreenInput}
-                  placeholder="e.g. Kansai Autumn Tour"
-                />
+                <TextInput value={tripName} onChangeText={setTripName} style={styles.fullScreenInput} />
 
                 <Text style={styles.fieldLabel}>DESTINATION</Text>
-                <TextInput
-                  value={destination}
-                  onChangeText={setDestination}
-                  style={styles.fullScreenInput}
-                  placeholder="e.g. Kyoto & Osaka"
-                />
+                <TextInput value={destination} onChangeText={setDestination} style={styles.fullScreenInput} />
 
                 <Text style={styles.fieldLabel}>TRIP DATES</Text>
                 <TouchableOpacity
@@ -284,37 +250,16 @@ export default function AIPlannerScreen() {
                   </View>
                 )}
 
-                {/* INVITATION LINK: Rendered directly in Step 1 when Group Trip is active */}
-                {tripType === 'Group' && (
-                  <View style={styles.inviteShareBox}>
-                    <View style={styles.inviteShareLeft}>
-                      <View style={styles.inviteIconCircle}>
-                        <Ionicons name="people" size={16} color="#0D9488" />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.inviteLinkText}>app.escape.io/join/kansai-2026</Text>
-                        <Text style={styles.inviteSubText}>Share link with travel buddies to calibrate</Text>
-                      </View>
-                    </View>
-                    <TouchableOpacity style={styles.shareIconBtn} activeOpacity={0.8} onPress={handleShareInvite}>
-                      <Ionicons name="share-social-outline" size={16} color="#FFFFFF" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-
                 <TouchableOpacity style={styles.primaryNextBtn} onPress={() => setWizardStep(2)}>
                   <Text style={styles.primaryNextBtnText}>Next: Style & Diet Tags →</Text>
                 </TouchableOpacity>
               </View>
             )}
 
-            {/* STEP 2: TAGS */}
             {wizardStep === 2 && (
               <View>
                 <Text style={styles.stepTitle}>Travel Vibes & Preferences</Text>
-                <Text style={styles.stepDesc}>
-                  Select your tags so the algorithm calibrates spots matching your schedule.
-                </Text>
+                <Text style={styles.stepDesc}>Select your tags so AI matches your style.</Text>
 
                 <Text style={styles.tagSectionLabel}>TRAVEL STYLE</Text>
                 <View style={styles.tagWrap}>
@@ -372,53 +317,16 @@ export default function AIPlannerScreen() {
               </View>
             )}
 
-            {/* STEP 3: BUDGETS & ROUTE REDIRECTION */}
             {wizardStep === 3 && (
               <View>
                 <Text style={styles.stepTitle}>Budget Ceilings</Text>
-                <Text style={styles.stepDesc}>
-                  Enter limits to filter activities according to your wallet.
-                </Text>
+                <Text style={styles.stepDesc}>Enter limits to filter flight and hotel recommendations.</Text>
 
                 <View style={styles.budgetCard}>
-                  <Text style={styles.budgetCardHeading}>🏨 Stay Cap (Per Room / Night)</Text>
+                  <Text style={styles.budgetCardHeading}>🏨 Stay Cap (Per Night)</Text>
                   <View style={styles.numberInputBar}>
                     <Text style={styles.currencyPrefix}>RM</Text>
-                    <TextInput
-                      value={stayLimit}
-                      onChangeText={setStayLimit}
-                      keyboardType="numeric"
-                      style={styles.numericTextInput}
-                    />
-                    <Text style={styles.unitSuffix}>/ night</Text>
-                  </View>
-                </View>
-
-                <View style={styles.budgetCard}>
-                  <Text style={styles.budgetCardHeading}>🚆 Daily Transit Allowance</Text>
-                  <View style={styles.numberInputBar}>
-                    <Text style={styles.currencyPrefix}>RM</Text>
-                    <TextInput
-                      value={transitCap}
-                      onChangeText={setTransitCap}
-                      keyboardType="numeric"
-                      style={styles.numericTextInput}
-                    />
-                    <Text style={styles.unitSuffix}>/ day</Text>
-                  </View>
-                </View>
-
-                <View style={styles.budgetCard}>
-                  <Text style={styles.budgetCardHeading}>🍜 Daily Living (Food & Tickets)</Text>
-                  <View style={styles.numberInputBar}>
-                    <Text style={styles.currencyPrefix}>RM</Text>
-                    <TextInput
-                      value={dailyLiving}
-                      onChangeText={setDailyLiving}
-                      keyboardType="numeric"
-                      style={styles.numericTextInput}
-                    />
-                    <Text style={styles.unitSuffix}>/ day</Text>
+                    <TextInput value={stayLimit} onChangeText={setStayLimit} keyboardType="numeric" style={styles.numericTextInput} />
                   </View>
                 </View>
 
@@ -427,9 +335,7 @@ export default function AIPlannerScreen() {
                     <Text style={styles.prevBtnText}>Back</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.nextStepBtnFlex} onPress={handleFinishWizard}>
-                    <Text style={styles.primaryNextBtnText}>
-                      {tripType === 'Solo' ? 'Open Solo Studio →' : 'Open Group Studio →'}
-                    </Text>
+                    <Text style={styles.primaryNextBtnText}>Proceed to AI Flight/Stay Match →</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -444,85 +350,22 @@ export default function AIPlannerScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   flexOne: { flex: 1 },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderColor: '#E5E7EB',
-  },
+  topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderColor: '#E5E7EB' },
   topBarLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   topBarHeading: { fontSize: 16, fontWeight: '800', color: '#111827' },
   emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 28 },
-  emptyIllustrationBox: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#CCFBF1',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
-  },
-  emptySparkleBadge: {
-    position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: '#0D9488',
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  emptyIllustrationBox: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#CCFBF1', alignItems: 'center', justifyContent: 'center', marginBottom: 20 },
+  emptySparkleBadge: { position: 'absolute', top: 6, right: 6, backgroundColor: '#0D9488', width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   emptyTitle: { fontSize: 20, fontWeight: '800', color: '#111827', textAlign: 'center' },
-  emptySubtitle: {
-    fontSize: 13,
-    color: '#6B7280',
-    textAlign: 'center',
-    lineHeight: 20,
-    marginTop: 8,
-    marginBottom: 26,
-  },
-  createMainBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#0D9488',
-    paddingVertical: 14,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-  },
+  emptySubtitle: { fontSize: 13, color: '#6B7280', textAlign: 'center', lineHeight: 20, marginTop: 8, marginBottom: 26 },
+  createMainBtn: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#0D9488', paddingVertical: 14, paddingHorizontal: 24, borderRadius: 16 },
   createMainBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '700' },
-  wizardTopBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    backgroundColor: '#FFFFFF',
-  },
-  circleBackBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  wizardTopBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FFFFFF' },
+  circleBackBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
   wizardTitleCenter: { alignItems: 'center' },
   wizardNavTitle: { fontSize: 15, fontWeight: '800', color: '#111827' },
   wizardNavStepText: { fontSize: 11, color: '#0D9488', fontWeight: '700', marginTop: 1 },
-  circleCloseBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  circleCloseBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
   progressTrack: { height: 3, backgroundColor: '#E5E7EB', width: '100%' },
   progressFill: { height: '100%', backgroundColor: '#0D9488' },
   wizardScrollContent: { padding: 20, paddingBottom: 160 },
@@ -530,73 +373,19 @@ const styles = StyleSheet.create({
   stepDesc: { fontSize: 13, color: '#6B7280', lineHeight: 19, marginTop: 4, marginBottom: 16 },
   fieldLabel: { fontSize: 10, fontWeight: '800', color: '#6B7280', letterSpacing: 0.5, marginTop: 10, marginBottom: 6 },
   modeToggleContainer: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  modeCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 14,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    alignItems: 'center',
-  },
+  modeCard: { flex: 1, backgroundColor: '#FFFFFF', borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#E5E7EB', alignItems: 'center' },
   modeCardActive: { borderColor: '#0D9488', backgroundColor: '#F0FDFA' },
-  modeIconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
+  modeIconCircle: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   modeIconCircleActive: { backgroundColor: '#0D9488' },
   modeTitle: { fontSize: 13, fontWeight: '700', color: '#374151' },
   modeTitleActive: { color: '#0D9488', fontWeight: '800' },
-  modeSub: { fontSize: 10, color: '#9CA3AF', marginTop: 2, textAlign: 'center' },
-  fullScreenInput: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginBottom: 6,
-  },
-  dateSelectorBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginBottom: 8,
-  },
+  fullScreenInput: { backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, fontWeight: '600', color: '#111827', borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 6 },
+  dateSelectorBar: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 8 },
   dateSelectorLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   dateSelectorValue: { fontSize: 14, fontWeight: '700', color: '#111827' },
-  durationBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#CCFBF1',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
+  durationBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#CCFBF1', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   durationBadgeText: { fontSize: 11, fontWeight: '700', color: '#0D9488' },
-  calendarContainer: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    marginBottom: 14,
-  },
+  calendarContainer: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 14 },
   calendarMonthHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   calendarMonthTitle: { fontSize: 15, fontWeight: '800', color: '#111827' },
   calendarPrompt: { fontSize: 11, fontWeight: '600', color: '#0D9488' },
@@ -604,70 +393,13 @@ const styles = StyleSheet.create({
   weekDayLabel: { fontSize: 11, fontWeight: '700', color: '#9CA3AF', width: 36, textAlign: 'center' },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-around' },
   emptyDayCell: { width: (width - 72) / 7, height: 38 },
-  dayCell: {
-    width: (width - 72) / 7,
-    height: 38,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 19,
-    marginVertical: 2,
-  },
+  dayCell: { width: (width - 72) / 7, height: 38, alignItems: 'center', justifyContent: 'center', borderRadius: 19, marginVertical: 2 },
   dayCellInRange: { backgroundColor: '#F0FDFA', borderRadius: 0 },
   dayCellSelected: { backgroundColor: '#0D9488', borderRadius: 19 },
   dayCellText: { fontSize: 13, fontWeight: '600', color: '#374151' },
   dayCellTextInRange: { color: '#0D9488', fontWeight: '700' },
   dayCellTextSelected: { color: '#FFFFFF', fontWeight: '800' },
-  inviteShareBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#F0FDFA',
-    borderRadius: 14,
-    padding: 12,
-    marginTop: 6,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#CCFBF1',
-  },
-  inviteShareLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    flex: 1,
-  },
-  inviteIconCircle: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#CCFBF1',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  inviteLinkText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#0F766E',
-  },
-  inviteSubText: {
-    fontSize: 10,
-    color: '#6B7280',
-    marginTop: 1,
-  },
-  shareIconBtn: {
-    backgroundColor: '#0D9488',
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryNextBtn: {
-    backgroundColor: '#111827',
-    paddingVertical: 15,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginTop: 10,
-  },
+  primaryNextBtn: { backgroundColor: '#111827', paddingVertical: 15, borderRadius: 14, alignItems: 'center', marginTop: 10 },
   primaryNextBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
   tagSectionLabel: { fontSize: 10, fontWeight: '800', color: '#6B7280', letterSpacing: 0.5, marginTop: 10, marginBottom: 6 },
   tagWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 },
@@ -677,34 +409,11 @@ const styles = StyleSheet.create({
   tagPillTextActive: { color: '#FFFFFF', fontWeight: '700' },
   budgetCard: { backgroundColor: '#FFFFFF', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 10 },
   budgetCardHeading: { fontSize: 11, fontWeight: '700', color: '#374151', marginBottom: 8 },
-  numberInputBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
+  numberInputBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F9FAFB', borderRadius: 10, paddingHorizontal: 12, borderWidth: 1, borderColor: '#E5E7EB' },
   currencyPrefix: { fontSize: 13, fontWeight: '700', color: '#6B7280', marginRight: 6 },
   numericTextInput: { flex: 1, fontSize: 15, fontWeight: '800', color: '#111827', paddingVertical: 8 },
-  unitSuffix: { fontSize: 11, color: '#9CA3AF' },
   twoBtnRow: { flexDirection: 'row', gap: 10, marginTop: 14 },
-  prevBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 18,
-    borderRadius: 14,
-    backgroundColor: '#E5E7EB',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  prevBtn: { paddingVertical: 12, paddingHorizontal: 18, borderRadius: 14, backgroundColor: '#E5E7EB', alignItems: 'center', justifyContent: 'center' },
   prevBtnText: { color: '#4B5563', fontSize: 12, fontWeight: '700' },
-  nextStepBtnFlex: {
-    flex: 1,
-    backgroundColor: '#111827',
-    paddingVertical: 12,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  nextStepBtnFlex: { flex: 1, backgroundColor: '#111827', paddingVertical: 12, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
 });
