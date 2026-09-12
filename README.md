@@ -1,4 +1,4 @@
-TripManager by teamname
+#TripManager by teamname
 Team Member: Chin Jie, Ivory Liong Jin Earn
 Problem Statement: Travel Planner
 Video Presentation: [Unlisted Youtube Link] 
