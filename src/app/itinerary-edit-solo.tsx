@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+﻿import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
@@ -24,6 +24,10 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 const CARD_HEIGHT = 112;
+const SOLO_FLIGHT_OUTBOUND_PRICE = 390;
+const SOLO_FLIGHT_RETURN_PRICE = 420;
+const SOLO_HOTEL_RATE_PER_NIGHT = 400;
+const SOLO_HOTEL_NIGHTS = 4;
 
 interface ActivityStop {
   id: string;
@@ -177,7 +181,7 @@ export default function ItineraryEditSoloScreen() {
         location: 'KLCC Park View • 0.2 km from center',
         rating: '4.8★',
         reviews: '2.4k reviews',
-        cost: 'RM 400',
+        cost: `RM ${SOLO_HOTEL_RATE_PER_NIGHT} x ${SOLO_HOTEL_NIGHTS} nights = RM ${SOLO_HOTEL_RATE_PER_NIGHT * SOLO_HOTEL_NIGHTS}`,
         isHotel: true,
         image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600',
         googleReviewsData: {
@@ -211,6 +215,9 @@ export default function ItineraryEditSoloScreen() {
   });
 
   const currentStops = stopsByDay[selectedDay] || [];
+  const soloFlightTotal = SOLO_FLIGHT_OUTBOUND_PRICE + SOLO_FLIGHT_RETURN_PRICE;
+  const soloHotelTotal = SOLO_HOTEL_RATE_PER_NIGHT * SOLO_HOTEL_NIGHTS;
+  const soloPaymentTotal = soloFlightTotal + soloHotelTotal;
 
   const handleSwap = (fromIdx: number, toIdx: number) => {
     const updated = [...currentStops];
@@ -514,22 +521,34 @@ export default function ItineraryEditSoloScreen() {
 
             <View style={styles.checkoutBreakdown}>
               <View style={styles.checkoutRow}>
-                <Text style={styles.checkoutItemName}>✈️ Batik Air OD612 (Flight)</Text>
-                <Text style={styles.checkoutItemPrice}>RM 390</Text>
+                <Text style={styles.checkoutItemName}>Batik Air OD612 outbound</Text>
+                <Text style={styles.checkoutItemPrice}>RM {SOLO_FLIGHT_OUTBOUND_PRICE}</Text>
               </View>
               <View style={styles.checkoutRow}>
-                <Text style={styles.checkoutItemName}>🏨 Traders Hotel KL (Lodging)</Text>
-                <Text style={styles.checkoutItemPrice}>RM 400</Text>
+                <Text style={styles.checkoutItemName}>Batik Air OD613 return</Text>
+                <Text style={styles.checkoutItemPrice}>RM {SOLO_FLIGHT_RETURN_PRICE}</Text>
+              </View>
+              <View style={styles.checkoutRow}>
+                <Text style={styles.checkoutItemName}>Round-trip flight subtotal</Text>
+                <Text style={styles.checkoutItemPrice}>RM {soloFlightTotal}</Text>
+              </View>
+              <View style={styles.checkoutRow}>
+                <Text style={styles.checkoutItemName}>Traders Hotel KL</Text>
+                <Text style={styles.checkoutItemPrice}>RM {SOLO_HOTEL_RATE_PER_NIGHT} / night</Text>
+              </View>
+              <View style={styles.checkoutRow}>
+                <Text style={styles.checkoutItemName}>Hotel stay ({SOLO_HOTEL_NIGHTS} nights)</Text>
+                <Text style={styles.checkoutItemPrice}>RM {soloHotelTotal}</Text>
               </View>
               <View style={[styles.checkoutRow, { borderTopWidth: 1, borderColor: '#E5E7EB', paddingTop: 8, marginTop: 8 }]}>
                 <Text style={[styles.checkoutItemName, { fontWeight: '800', color: '#111827' }]}>Total Payment Due:</Text>
-                <Text style={[styles.checkoutItemPrice, { fontWeight: '800', color: '#0D9488', fontSize: 16 }]}>RM 790</Text>
+                <Text style={[styles.checkoutItemPrice, { fontWeight: '800', color: '#0D9488', fontSize: 16 }]}>RM {soloPaymentTotal}</Text>
               </View>
             </View>
 
             <TouchableOpacity style={styles.confirmPayBtn} onPress={handleFinalizePayment}>
               <Ionicons name="card" size={18} color="#FFFFFF" />
-              <Text style={styles.confirmPayBtnText}>Pay RM 790 with Apple Pay / Card</Text>
+              <Text style={styles.confirmPayBtnText}>Pay RM {soloPaymentTotal} with Apple Pay / Card</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -648,7 +667,10 @@ export default function ItineraryEditSoloScreen() {
                 <View key={alt.id} style={styles.altCardWrapper}>
                   <TouchableOpacity
                     style={styles.altCardMain}
-                    onPress={() => setActiveAltReviewSpot(alt)}
+                    onPress={() => {
+                      setShowAlternativeModal(false);
+                      setActiveAltReviewSpot(alt);
+                    }}
                     activeOpacity={0.9}
                   >
                     <Image source={{ uri: alt.image }} style={styles.altThumbnail} />

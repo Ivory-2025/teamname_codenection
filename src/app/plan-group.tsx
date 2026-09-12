@@ -25,6 +25,10 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 const CARD_HEIGHT = 112;
+const GROUP_FLIGHT_OUTBOUND_PRICE = 390;
+const GROUP_FLIGHT_RETURN_PRICE = 420;
+const GROUP_HOTEL_RATE_PER_NIGHT = 400;
+const GROUP_HOTEL_NIGHTS = 4;
 
 interface MemberStatus {
   id: string;
@@ -232,7 +236,7 @@ export default function PlanGroupScreen() {
         location: 'KLCC Park View • 0.2 km from center',
         rating: '4.8★',
         reviews: '2,410 reviews',
-        cost: 'RM 400',
+        cost: `RM ${GROUP_HOTEL_RATE_PER_NIGHT} x ${GROUP_HOTEL_NIGHTS} nights = RM ${GROUP_HOTEL_RATE_PER_NIGHT * GROUP_HOTEL_NIGHTS}`,
         likes: 4,
         dislikes: 0,
         userReaction: 'like',
@@ -253,6 +257,10 @@ export default function PlanGroupScreen() {
 
   const currentStops = timelineStops[selectedDay] || [];
   const readyCount = members.filter((m) => m.isReady).length;
+  const groupFlightPerPersonTotal = GROUP_FLIGHT_OUTBOUND_PRICE + GROUP_FLIGHT_RETURN_PRICE;
+  const groupFlightTotal = groupFlightPerPersonTotal * members.length;
+  const groupHotelTotal = GROUP_HOTEL_RATE_PER_NIGHT * GROUP_HOTEL_NIGHTS;
+  const groupPaymentTotal = groupFlightTotal + groupHotelTotal;
 
   const handleSwap = (fromIdx: number, toIdx: number) => {
     const updated = [...currentStops];
@@ -692,21 +700,33 @@ export default function PlanGroupScreen() {
             <View style={styles.checkoutBreakdown}>
               <View style={styles.checkoutRow}>
                 <Text style={styles.checkoutItemName}>✈️ Batik Air OD612 (Group Flights)</Text>
-                <Text style={styles.checkoutItemPrice}>RM 390 / pax</Text>
+                <Text style={styles.checkoutItemPrice}>RM {GROUP_FLIGHT_OUTBOUND_PRICE} / pax</Text>
+              </View>
+              <View style={styles.checkoutRow}>
+                <Text style={styles.checkoutItemName}>Batik Air OD613 return</Text>
+                <Text style={styles.checkoutItemPrice}>RM {GROUP_FLIGHT_RETURN_PRICE} / pax</Text>
+              </View>
+              <View style={styles.checkoutRow}>
+                <Text style={styles.checkoutItemName}>Round-trip flight subtotal ({members.length} pax)</Text>
+                <Text style={styles.checkoutItemPrice}>RM {groupFlightTotal}</Text>
               </View>
               <View style={styles.checkoutRow}>
                 <Text style={styles.checkoutItemName}>🏨 Traders Hotel KL (Lodging)</Text>
-                <Text style={styles.checkoutItemPrice}>RM 400</Text>
+                <Text style={styles.checkoutItemPrice}>RM {GROUP_HOTEL_RATE_PER_NIGHT} / night</Text>
+              </View>
+              <View style={styles.checkoutRow}>
+                <Text style={styles.checkoutItemName}>Hotel stay ({GROUP_HOTEL_NIGHTS} nights)</Text>
+                <Text style={styles.checkoutItemPrice}>RM {groupHotelTotal}</Text>
               </View>
               <View style={[styles.checkoutRow, { borderTopWidth: 1, borderColor: '#E5E7EB', paddingTop: 8, marginTop: 8 }]}>
                 <Text style={[styles.checkoutItemName, { fontWeight: '800', color: '#111827' }]}>Total Payment Due:</Text>
-                <Text style={[styles.checkoutItemPrice, { fontWeight: '800', color: '#0D9488', fontSize: 16 }]}>RM 790</Text>
+                <Text style={[styles.checkoutItemPrice, { fontWeight: '800', color: '#0D9488', fontSize: 16 }]}>RM {groupPaymentTotal}</Text>
               </View>
             </View>
 
             <TouchableOpacity style={styles.confirmPayBtn} onPress={handleFinalizeGroupPayment}>
               <Ionicons name="card" size={18} color="#FFFFFF" />
-              <Text style={styles.confirmPayBtnText}>Pay RM 790 with Apple Pay / Card</Text>
+              <Text style={styles.confirmPayBtnText}>Pay RM {groupPaymentTotal} with Apple Pay / Card</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -884,7 +904,10 @@ export default function PlanGroupScreen() {
                 <View key={alt.id} style={styles.altCardWrapper}>
                   <TouchableOpacity
                     style={styles.altCardMain}
-                    onPress={() => setActiveAltReviewSpot(alt)}
+                    onPress={() => {
+                      setShowAlternativeModal(false);
+                      setActiveAltReviewSpot(alt);
+                    }}
                     activeOpacity={0.9}
                   >
                     <Image source={{ uri: alt.image }} style={styles.altThumbnail} />

@@ -4,27 +4,60 @@ import { useState } from 'react';
 import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function BookingSelectionScreen() {
-  const router = useRouter();
-  const { mode } = useLocalSearchParams<{ mode?: string }>();
-  const isSolo = mode === 'solo';
+const HOTEL_NIGHTS = 4;
 
-  const [step, setStep] = useState<'flight' | 'hotel' | 'confirm'>('flight');
-  const [selectedFlight, setSelectedFlight] = useState<any>({
+const flights = [
+  {
+    id: 'f1',
+    airline: 'AirAsia',
+    outboundFlightNo: 'AK-380',
+    returnFlightNo: 'AK-381',
+    outboundTime: '08:00 AM - 11:30 AM',
+    returnTime: '06:10 PM - 10:00 PM',
+    outboundRoute: 'KUL -> KIX',
+    returnRoute: 'KIX -> KUL',
+    outboundDuration: '3h 30m - Direct',
+    returnDuration: '3h 50m - Direct',
+    price: 'RM 710',
+    numericPrice: 710,
+  },
+  {
+    id: 'f2',
+    airline: 'Malaysia Airlines',
+    outboundFlightNo: 'MH-702',
+    returnFlightNo: 'MH-703',
+    outboundTime: '02:15 PM - 05:45 PM',
+    returnTime: '08:30 PM - 12:35 AM',
+    outboundRoute: 'KUL -> KIX',
+    returnRoute: 'KIX -> KUL',
+    outboundDuration: '3h 30m - Direct',
+    returnDuration: '4h 05m - Direct',
+    price: 'RM 1,060',
+    numericPrice: 1060,
+  },
+  {
     id: 'f3',
-    airline: 'Batik Air OD612',
-    flightNo: 'OD-612',
-    time: '06:30 AM - 10:00 AM',
-    duration: '3h 30m • Direct',
-    price: 'RM 390',
-    numericPrice: 390,
-  });
-  const [selectedHotel, setSelectedHotel] = useState<any>({
+    airline: 'Batik Air Malaysia',
+    outboundFlightNo: 'OD-612',
+    returnFlightNo: 'OD-613',
+    outboundTime: '06:30 AM - 10:00 AM',
+    returnTime: '07:15 PM - 11:25 PM',
+    outboundRoute: 'KUL -> KIX',
+    returnRoute: 'KIX -> KUL',
+    outboundDuration: '3h 30m - Direct',
+    returnDuration: '4h 10m - Direct',
+    price: 'RM 810',
+    numericPrice: 810,
+  },
+];
+
+const hotels = [
+  {
     id: 'h1',
     name: 'Traders Hotel Kuala Lumpur',
-    rating: '4.8★',
+    rating: '4.8 stars',
     reviews: '2,410 reviews',
-    location: 'KLCC Park View • 0.2 km from center',
+    location: 'KLCC Park View - 0.2 km from center',
     price: 'RM 400',
     numericPrice: 400,
     image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600',
@@ -36,68 +69,47 @@ export default function BookingSelectionScreen() {
         'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600',
       ],
       comments: [
-        { user: 'Jonathan L.', rating: '★★★★★', text: 'Unbeatable views of the Petronas Twin Towers directly from the room.', time: '2 days ago' },
+        { user: 'Jonathan L.', rating: '5 stars', text: 'Unbeatable views of the Petronas Twin Towers directly from the room.', time: '2 days ago' },
       ],
     },
-  });
-  const [activeHotelReview, setActiveHotelReview] = useState<any>(null);
-
-  const flights = [
-    { id: 'f1', airline: 'AirAsia AK380', flightNo: 'AK-380', time: '08:00 AM - 11:30 AM', duration: '3h 30m • Direct', price: 'RM 350', numericPrice: 350 },
-    { id: 'f2', airline: 'Malaysia Airlines MH702', flightNo: 'MH-702', time: '02:15 PM - 05:45 PM', duration: '3h 30m • Direct', price: 'RM 520', numericPrice: 520 },
-    { id: 'f3', airline: 'Batik Air OD612', flightNo: 'OD-612', time: '06:30 AM - 10:00 AM', duration: '3h 30m • Direct', price: 'RM 390', numericPrice: 390 },
-  ];
-
-  const hotels = [
-    { 
-      id: 'h1', 
-      name: 'Traders Hotel Kuala Lumpur', 
-      rating: '4.8★', 
-      reviews: '2,410 reviews', 
-      location: 'KLCC Park View • 0.2 km from center', 
-      price: 'RM 400',
-      numericPrice: 400,
-      image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600',
-      googleReviewsData: {
-        starRating: '4.8 / 5.0',
-        totalReviews: '2,410 Google Reviews',
-        photos: [
-          'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600',
-          'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600',
-        ],
-        comments: [
-          { user: 'Jonathan L.', rating: '★★★★★', text: 'Unbeatable views of the Petronas Twin Towers directly from the room.', time: '2 days ago' },
-        ]
-      }
+  },
+  {
+    id: 'h2',
+    name: 'CitizenM Bukit Bintang',
+    rating: '4.6 stars',
+    reviews: '1,890 reviews',
+    location: 'Bukit Bintang - Vibrant District',
+    price: 'RM 280',
+    numericPrice: 280,
+    image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600',
+    googleReviewsData: {
+      starRating: '4.6 / 5.0',
+      totalReviews: '1,890 Google Reviews',
+      photos: ['https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600'],
+      comments: [
+        { user: 'Chloe M.', rating: '5 stars', text: 'Super trendy rooms. Perfect central location.', time: '3 days ago' },
+      ],
     },
-    { 
-      id: 'h2', 
-      name: 'CitizenM Bukit Bintang', 
-      rating: '4.6★', 
-      reviews: '1,890 reviews', 
-      location: 'Bukit Bintang • Vibrant District', 
-      price: 'RM 280',
-      numericPrice: 280,
-      image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600',
-      googleReviewsData: {
-        starRating: '4.6 / 5.0',
-        totalReviews: '1,890 Google Reviews',
-        photos: [
-          'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=600',
-        ],
-        comments: [
-          { user: 'Chloe M.', rating: '★★★★★', text: 'Super trendy rooms. Perfect central location.', time: '3 days ago' },
-        ]
-      }
-    },
-  ];
+  },
+];
 
-  const totalPrice = (selectedFlight?.numericPrice || 0) + (selectedHotel?.numericPrice || 0);
+export default function BookingSelectionScreen() {
+  const router = useRouter();
+  const { mode } = useLocalSearchParams<{ mode?: string }>();
+  const isSolo = mode === 'solo';
+
+  const [step, setStep] = useState<'flight' | 'hotel' | 'confirm'>('flight');
+  const [selectedFlight, setSelectedFlight] = useState(flights[2]);
+  const [selectedHotel, setSelectedHotel] = useState(hotels[0]);
+  const [activeHotelReview, setActiveHotelReview] = useState<(typeof hotels)[number] | null>(null);
+
+  const hotelTotal = selectedHotel.numericPrice * HOTEL_NIGHTS;
+  const totalPrice = selectedFlight.numericPrice + hotelTotal;
 
   const handleConfirmSelection = () => {
     Alert.alert(
-      'Selection Confirmed! ✈️🏨',
-      'Your flight and hotel stay have been locked into your itinerary. You can review your day-by-day plan before completing payment.',
+      'Selection Confirmed',
+      'Your round-trip flight and hotel stay have been locked into your itinerary. You can review your day-by-day plan before completing payment.',
       [
         {
           text: 'View Itinerary',
@@ -116,22 +128,22 @@ export default function BookingSelectionScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <View style={styles.topBar}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => {
             if (step === 'confirm') setStep('hotel');
             else if (step === 'hotel') setStep('flight');
             else router.back();
-          }} 
+          }}
           style={styles.backCircleBtn}
         >
           <Ionicons name="arrow-back" size={20} color="#111827" />
         </TouchableOpacity>
         <View style={styles.headerTitleBox}>
           <Text style={styles.headerTitle}>
-            {step === 'flight' ? 'Step 1: Select Flight' : step === 'hotel' ? 'Step 2: Select Hotel Stay' : 'Step 3: Confirm Selection'}
+            {step === 'flight' ? 'Step 1: Select Round-Trip Flight' : step === 'hotel' ? 'Step 2: Select Hotel Stay' : 'Step 3: Confirm Selection'}
           </Text>
           <Text style={styles.headerSub}>
-            {isSolo ? 'Solo Booking • Personal Vault Sync' : 'Group Booking • Group Vault Sync'}
+            {isSolo ? 'Solo Booking - Personal Vault Sync' : 'Group Booking - Group Vault Sync'}
           </Text>
         </View>
         <View style={styles.stepIndicatorBadge}>
@@ -142,11 +154,11 @@ export default function BookingSelectionScreen() {
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         {step === 'flight' ? (
           <View>
-            <Text style={styles.sectionInstruction}>Choose your preferred airline schedule:</Text>
+            <Text style={styles.sectionInstruction}>Choose your preferred round-trip flight package:</Text>
             {flights.map((flight) => (
-              <TouchableOpacity 
-                key={flight.id} 
-                style={[styles.flightCard, selectedFlight?.id === flight.id && styles.selectedCard]}
+              <TouchableOpacity
+                key={flight.id}
+                style={[styles.flightCard, selectedFlight.id === flight.id && styles.selectedCard]}
                 onPress={() => setSelectedFlight(flight)}
                 activeOpacity={0.9}
               >
@@ -158,32 +170,36 @@ export default function BookingSelectionScreen() {
                   <Text style={styles.flightPriceText}>{flight.price} <Text style={styles.perPax}>/pax</Text></Text>
                 </View>
 
-                <View style={styles.flightDetailsRow}>
-                  <View>
-                    <Text style={styles.timeText}>{flight.time}</Text>
-                    <Text style={styles.durationText}>{flight.duration}</Text>
-                  </View>
-                  <View style={styles.flightNoBox}>
-                    <Text style={styles.flightNoText}>{flight.flightNo}</Text>
-                  </View>
-                </View>
+                <FlightLeg
+                  label="Outbound"
+                  icon="trail-sign-outline"
+                  route={flight.outboundRoute}
+                  time={flight.outboundTime}
+                  duration={flight.outboundDuration}
+                  flightNo={flight.outboundFlightNo}
+                />
+                <FlightLeg
+                  label="Return"
+                  icon="return-up-back-outline"
+                  route={flight.returnRoute}
+                  time={flight.returnTime}
+                  duration={flight.returnDuration}
+                  flightNo={flight.returnFlightNo}
+                />
               </TouchableOpacity>
             ))}
 
-            <TouchableOpacity 
-              style={[styles.mainBtn, !selectedFlight && styles.disabledBtn]} 
-              onPress={() => setStep('hotel')}
-            >
-              <Text style={styles.mainBtnText}>Proceed to Hotel Selection →</Text>
+            <TouchableOpacity style={styles.mainBtn} onPress={() => setStep('hotel')}>
+              <Text style={styles.mainBtnText}>Proceed to Hotel Selection</Text>
             </TouchableOpacity>
           </View>
         ) : step === 'hotel' ? (
           <View>
-            <Text style={styles.sectionInstruction}>Choose accommodation (Tap Google badge to view reviews):</Text>
+            <Text style={styles.sectionInstruction}>Choose accommodation for {HOTEL_NIGHTS} nights:</Text>
             {hotels.map((hotel) => (
-              <TouchableOpacity 
-                key={hotel.id} 
-                style={[styles.hotelCardContainer, selectedHotel?.id === hotel.id && styles.selectedCard]}
+              <TouchableOpacity
+                key={hotel.id}
+                style={[styles.hotelCardContainer, selectedHotel.id === hotel.id && styles.selectedCard]}
                 onPress={() => setSelectedHotel(hotel)}
                 activeOpacity={0.9}
               >
@@ -193,62 +209,76 @@ export default function BookingSelectionScreen() {
                     <Text style={styles.hotelName} numberOfLines={1}>{hotel.name}</Text>
                     <TouchableOpacity onPress={(e) => { e.stopPropagation(); setActiveHotelReview(hotel); }} style={styles.reviewTapPill}>
                       <Ionicons name="logo-google" size={11} color="#4285F4" />
-                      <Text style={styles.reviewTapText}>{hotel.rating} Reviews</Text>
+                      <Text style={styles.reviewTapText}>{hotel.rating}</Text>
                     </TouchableOpacity>
                   </View>
-                  <Text style={styles.hotelLocation} numberOfLines={1}>📍 {hotel.location}</Text>
-                  
+                  <Text style={styles.hotelLocation} numberOfLines={1}>{hotel.location}</Text>
+
                   <View style={styles.hotelBottomRow}>
                     <Text style={styles.reviewsText}>{hotel.reviews}</Text>
-                    <Text style={styles.hotelPriceText}>{hotel.price} <Text style={styles.perPax}>/night</Text></Text>
+                    <View style={styles.hotelPriceBox}>
+                      <Text style={styles.hotelPriceText}>{hotel.price} <Text style={styles.perPax}>/night</Text></Text>
+                      <Text style={styles.hotelTotalText}>x {HOTEL_NIGHTS} nights = RM {hotel.numericPrice * HOTEL_NIGHTS}</Text>
+                    </View>
                   </View>
                 </View>
               </TouchableOpacity>
             ))}
 
-            <TouchableOpacity 
-              style={[styles.mainBtn, !selectedHotel && styles.disabledBtn]} 
-              onPress={() => setStep('confirm')}
-            >
-              <Text style={styles.mainBtnText}>Review Selection Summary →</Text>
+            <TouchableOpacity style={styles.mainBtn} onPress={() => setStep('confirm')}>
+              <Text style={styles.mainBtnText}>Review Selection Summary</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.paymentContainer}>
             <View style={styles.paymentSummaryCard}>
               <Text style={styles.summaryTitle}>Trip Booking Summary</Text>
-              
+
               <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Flight:</Text>
-                <Text style={styles.summaryValue}>{selectedFlight?.airline} ({selectedFlight?.price})</Text>
-              </View>
-              
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Hotel:</Text>
-                <Text style={styles.summaryValue}>{selectedHotel?.name} ({selectedHotel?.price})</Text>
+                <Text style={styles.summaryLabel}>Round-trip flight:</Text>
+                <Text style={styles.summaryValue}>{selectedFlight.airline} ({selectedFlight.price})</Text>
               </View>
 
-              <View style={[styles.summaryRow, { borderTopWidth: 1, borderColor: '#E5E7EB', paddingTop: 10, marginTop: 10 }]}>
-                <Text style={[styles.summaryLabel, { fontWeight: '800', color: '#111827' }]}>Estimated Total:</Text>
-                <Text style={[styles.summaryValue, { color: '#0D9488', fontWeight: '800', fontSize: 16 }]}>RM {totalPrice}</Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Outbound:</Text>
+                <Text style={styles.summaryValue}>{selectedFlight.outboundFlightNo} {selectedFlight.outboundRoute}</Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Return:</Text>
+                <Text style={styles.summaryValue}>{selectedFlight.returnFlightNo} {selectedFlight.returnRoute}</Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Hotel:</Text>
+                <Text style={styles.summaryValue}>{selectedHotel.name}</Text>
+              </View>
+
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Hotel nights:</Text>
+                <Text style={styles.summaryValue}>RM {selectedHotel.numericPrice} x {HOTEL_NIGHTS} = RM {hotelTotal}</Text>
+              </View>
+
+              <View style={[styles.summaryRow, styles.totalRow]}>
+                <Text style={styles.totalLabel}>Estimated Total:</Text>
+                <Text style={styles.totalValue}>RM {totalPrice}</Text>
               </View>
             </View>
 
             <View style={styles.infoNoticeBox}>
               <Ionicons name="information-circle-outline" size={18} color="#0D9488" />
               <Text style={styles.infoNoticeText}>
-                Confirming will add this hotel and flight directly into your daily schedule. You can make payment once your route is locked.
+                Confirming will add both flight legs and the full hotel stay directly into your daily schedule.
               </Text>
             </View>
 
             <TouchableOpacity style={styles.mainBtn} onPress={handleConfirmSelection}>
-              <Text style={styles.mainBtnText}>Confirm Selection & Build Itinerary ✓</Text>
+              <Text style={styles.mainBtnText}>Confirm Selection & Build Itinerary</Text>
             </TouchableOpacity>
           </View>
         )}
       </ScrollView>
 
-      {/* HOTEL REVIEWS MODAL */}
       <Modal visible={!!activeHotelReview} transparent animationType="slide" onRequestClose={() => setActiveHotelReview(null)}>
         <View style={styles.modalBackdrop}>
           <View style={styles.modalSheetLarge}>
@@ -261,7 +291,7 @@ export default function BookingSelectionScreen() {
                     <Ionicons name="close" size={18} color="#4B5563" />
                   </TouchableOpacity>
                 </View>
-                
+
                 <Image source={{ uri: activeHotelReview.image }} style={styles.reviewModalImage} />
 
                 <View style={styles.googleRatingBox}>
@@ -274,28 +304,28 @@ export default function BookingSelectionScreen() {
 
                 <Text style={styles.fieldLabel}>VISITOR PHOTO GALLERY</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginBottom: 14 }}>
-                  {activeHotelReview.googleReviewsData.photos.map((p: string, idx: number) => (
-                    <Image key={idx} source={{ uri: p }} style={styles.galleryPhoto} />
+                  {activeHotelReview.googleReviewsData.photos.map((photo, idx) => (
+                    <Image key={idx} source={{ uri: photo }} style={styles.galleryPhoto} />
                   ))}
                 </ScrollView>
 
                 <Text style={styles.fieldLabel}>VERIFIED GUEST COMMENTS</Text>
-                {activeHotelReview.googleReviewsData.comments.map((c: any, idx: number) => (
+                {activeHotelReview.googleReviewsData.comments.map((comment, idx) => (
                   <View key={idx} style={styles.commentCard}>
                     <View style={styles.commentTopRow}>
-                      <Text style={styles.commentUser}>{c.user}</Text>
-                      <Text style={styles.commentStars}>{c.rating}</Text>
+                      <Text style={styles.commentUser}>{comment.user}</Text>
+                      <Text style={styles.commentStars}>{comment.rating}</Text>
                     </View>
-                    <Text style={styles.commentText}>{c.text}</Text>
-                    <Text style={styles.commentTime}>{c.time}</Text>
+                    <Text style={styles.commentText}>{comment.text}</Text>
+                    <Text style={styles.commentTime}>{comment.time}</Text>
                   </View>
                 ))}
 
-                <TouchableOpacity 
-                  style={[styles.modalSaveBtn, { marginTop: 16 }]} 
-                  onPress={() => { 
-                    setSelectedHotel(activeHotelReview); 
-                    setActiveHotelReview(null); 
+                <TouchableOpacity
+                  style={[styles.modalSaveBtn, { marginTop: 16 }]}
+                  onPress={() => {
+                    setSelectedHotel(activeHotelReview);
+                    setActiveHotelReview(null);
                   }}
                 >
                   <Text style={styles.modalSaveBtnText}>Select This Hotel & Continue</Text>
@@ -306,6 +336,38 @@ export default function BookingSelectionScreen() {
         </View>
       </Modal>
     </SafeAreaView>
+  );
+}
+
+function FlightLeg({
+  label,
+  icon,
+  route,
+  time,
+  duration,
+  flightNo,
+}: {
+  label: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  route: string;
+  time: string;
+  duration: string;
+  flightNo: string;
+}) {
+  return (
+    <View style={styles.flightLegRow}>
+      <View style={styles.flightLegLabel}>
+        <Ionicons name={icon} size={13} color="#0D9488" />
+        <Text style={styles.flightLegLabelText}>{label}</Text>
+      </View>
+      <View style={styles.flightLegDetails}>
+        <Text style={styles.timeText}>{route}</Text>
+        <Text style={styles.durationText}>{time} - {duration}</Text>
+      </View>
+      <View style={styles.flightNoBox}>
+        <Text style={styles.flightNoText}>{flightNo}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -322,13 +384,16 @@ const styles = StyleSheet.create({
   sectionInstruction: { fontSize: 13, fontWeight: '700', color: '#4B5563', marginBottom: 14, marginTop: 4 },
   flightCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E5E7EB' },
   flightTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  airlineBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F0FDFA', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  airlineBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F0FDFA', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, flexShrink: 1, marginRight: 8 },
   airlineName: { fontSize: 13, fontWeight: '700', color: '#0D9488' },
   flightPriceText: { fontSize: 16, fontWeight: '800', color: '#111827' },
   perPax: { fontSize: 11, color: '#9CA3AF', fontWeight: '500' },
-  flightDetailsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderColor: '#F3F4F6' },
-  timeText: { fontSize: 14, fontWeight: '700', color: '#111827' },
-  durationText: { fontSize: 11, color: '#6B7280', marginTop: 2 },
+  flightLegRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderColor: '#F3F4F6', marginTop: 8 },
+  flightLegLabel: { width: 78, flexDirection: 'row', alignItems: 'center', gap: 4 },
+  flightLegLabelText: { fontSize: 10.5, fontWeight: '800', color: '#0D9488' },
+  flightLegDetails: { flex: 1 },
+  timeText: { fontSize: 13.5, fontWeight: '700', color: '#111827' },
+  durationText: { fontSize: 10.5, color: '#6B7280', marginTop: 2 },
   flightNoBox: { backgroundColor: '#F3F4F6', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   flightNoText: { fontSize: 11, fontWeight: '700', color: '#4B5563' },
   hotelCardContainer: { backgroundColor: '#FFFFFF', borderRadius: 18, marginBottom: 14, borderWidth: 1, borderColor: '#E5E7EB', overflow: 'hidden' },
@@ -340,18 +405,22 @@ const styles = StyleSheet.create({
   reviewTapText: { fontSize: 11, fontWeight: '800', color: '#1D4ED8' },
   hotelLocation: { fontSize: 12, color: '#6B7280', marginBottom: 10 },
   hotelBottomRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderColor: '#F3F4F6' },
-  reviewsText: { fontSize: 11, color: '#9CA3AF' },
+  reviewsText: { fontSize: 11, color: '#9CA3AF', flex: 1 },
+  hotelPriceBox: { alignItems: 'flex-end' },
   hotelPriceText: { fontSize: 16, fontWeight: '800', color: '#0D9488' },
+  hotelTotalText: { fontSize: 10.5, color: '#B45309', fontWeight: '800', marginTop: 2 },
   selectedCard: { borderColor: '#0D9488', backgroundColor: '#F0FDFA', borderWidth: 2 },
   mainBtn: { backgroundColor: '#0D9488', paddingVertical: 16, borderRadius: 16, alignItems: 'center', marginTop: 20 },
-  disabledBtn: { backgroundColor: '#9CA3AF' },
   mainBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
   paymentContainer: { marginTop: 10 },
   paymentSummaryCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 18, borderWidth: 1, borderColor: '#E5E7EB' },
   summaryTitle: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 12 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 },
+  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 12, marginBottom: 6 },
   summaryLabel: { fontSize: 13, color: '#6B7280' },
-  summaryValue: { fontSize: 13, fontWeight: '700', color: '#111827' },
+  summaryValue: { fontSize: 13, fontWeight: '700', color: '#111827', flex: 1, textAlign: 'right' },
+  totalRow: { borderTopWidth: 1, borderColor: '#E5E7EB', paddingTop: 10, marginTop: 10 },
+  totalLabel: { fontSize: 13, fontWeight: '800', color: '#111827' },
+  totalValue: { color: '#0D9488', fontWeight: '800', fontSize: 16 },
   infoNoticeBox: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F0FDFA', borderWidth: 1, borderColor: '#CCFBF1', padding: 12, borderRadius: 12, marginTop: 14 },
   infoNoticeText: { fontSize: 12, color: '#0F766E', flex: 1, lineHeight: 16 },
   modalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.55)' },
