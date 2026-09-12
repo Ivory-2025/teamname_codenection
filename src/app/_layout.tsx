@@ -4,6 +4,7 @@ import { BlurView } from 'expo-blur';
 import { Tabs } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import {
+  Alert,
   Animated,
   Dimensions,
   Image,
@@ -18,7 +19,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -51,14 +52,60 @@ const MEMBERS = [
   { id: '4', name: 'Marcus', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100', dist: '1.2km away', status: 'On transit', battery: '60%' },
 ];
 
+interface BeaconData {
+  location: string;
+  meetupTime: string;
+  countdownMinutes: number;
+  active: boolean;
+  photoUri?: string;
+}
+
+interface ChatMessage {
+  id: string;
+  sender: string;
+  text?: string;
+  imageUri?: string;
+  time: string;
+  isMe: boolean;
+  type?: 'text' | 'beacon' | 'photo';
+  beacon?: BeaconData;
+}
+
+function LiveBeaconTimer({ initialMinutes }: { initialMinutes: number }) {
+  const [secondsLeft, setSecondsLeft] = useState(initialMinutes * 60);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSecondsLeft((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const mins = Math.floor(secondsLeft / 60);
+  const secs = secondsLeft % 60;
+  return (
+    <Text style={styles.countdownDigits}>
+      {mins.toString().padStart(2, '0')}:{secs.toString().padStart(2, '0')}
+    </Text>
+  );
+}
+
 function FloatingAssistiveDock() {
   const [activeModal, setActiveModal] = useState<'menu' | 'chat' | 'radar' | null>(null);
   const [inputText, setInputText] = useState('');
-  const [messages, setMessages] = useState([
-    { id: '1', sender: 'Kenji', text: 'Hey guys, Nishiki Market is getting packed! Meet near the matcha soft serve stall?', time: '1:18 PM', isMe: false },
-    { id: '2', sender: 'Chloe', text: 'On my way! Grabbing iced tea first 🍵', time: '1:21 PM', isMe: false },
-    { id: '3', sender: 'You', text: 'Just walking past the main gate, see you in 3 mins!', time: '1:24 PM', isMe: true },
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: '1', sender: 'Kenji', text: 'Hey guys, Nishiki Market is getting packed! Meet near the matcha soft serve stall?', time: '1:18 PM', isMe: false, type: 'text' },
+    { id: '2', sender: 'Chloe', text: 'On my way! Grabbing iced tea first 🍵', time: '1:21 PM', isMe: false, type: 'text' },
+    { id: '3', sender: 'You', text: 'Just walking past the main gate, see you in 3 mins!', time: '1:24 PM', isMe: true, type: 'text' },
   ]);
+
+  // WhatsApp '+' Tray & Beacon Drawer States
+  const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
+  const [showBeaconDrawer, setShowBeaconDrawer] = useState(false);
+  const [beaconLocation, setBeaconLocation] = useState('Nishiki Market Entrance');
+  const [beaconDuration, setBeaconDuration] = useState(15);
+  const [beaconTargetTime, setBeaconTargetTime] = useState('01:45 PM');
+  const [beaconPhotoUri, setBeaconPhotoUri] = useState<string | undefined>(undefined);
 
   const scrollViewRef = useRef<ScrollView>(null);
   const keyboardHeight = useRef(new Animated.Value(0)).current;
@@ -149,17 +196,72 @@ function FloatingAssistiveDock() {
     setMessages((prev) => [
       ...prev,
       {
-        id: Date.now().toString(),
+        id: `txt-${Date.now()}`,
         sender: 'You',
         text: inputText.trim(),
         time: 'Just now',
         isMe: true,
+        type: 'text',
       },
     ]);
     setInputText('');
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
+  };
+
+  // Broadcast Beacon Card into the chat (with landmark photo if attached)
+  const handleSendBeaconToChat = () => {
+    if (!beaconLocation.trim()) {
+      Alert.alert('Location Required', 'Please enter a designated meetup point.');
+      return;
+    }
+
+    const beaconMessage: ChatMessage = {
+      id: `beacon-${Date.now()}`,
+      sender: 'You',
+      isMe: true,
+      time: 'Just now',
+      type: 'beacon',
+      beacon: {
+        location: beaconLocation.trim(),
+        meetupTime: beaconTargetTime.trim(),
+        countdownMinutes: beaconDuration,
+        photoUri: beaconPhotoUri,
+        active: true,
+      },
+    };
+
+    setMessages((prev) => [...prev, beaconMessage]);
+    setShowBeaconDrawer(false);
+    setShowAttachmentMenu(false);
+    setBeaconPhotoUri(undefined);
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  // Direct standalone photo sending from tray
+  const handleSendPhoto = () => {
+    setShowAttachmentMenu(false);
+    const photoMsg: ChatMessage = {
+      id: `photo-${Date.now()}`,
+      sender: 'You',
+      isMe: true,
+      time: 'Just now',
+      type: 'photo',
+      imageUri: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600',
+    };
+    setMessages((prev) => [...prev, photoMsg]);
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  };
+
+  // Snap or pick photo inside Beacon
+  const handleSnapBeaconPhoto = () => {
+    setBeaconPhotoUri('https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=600');
+    Alert.alert('Photo Captured 📸', 'Landmark photo attached to your beacon.');
   };
 
   return (
@@ -181,7 +283,7 @@ function FloatingAssistiveDock() {
         </View>
       </Animated.View>
 
-      {/* 1. Frosted Liquid Quick Menu (Split Bill Removed) */}
+      {/* 1. Quick Menu Modal */}
       <Modal
         visible={activeModal === 'menu'}
         transparent
@@ -213,7 +315,6 @@ function FloatingAssistiveDock() {
 
             <View style={styles.menuDivider} />
 
-            {/* 2 Balanced Columns: Group Chat & Live Radar */}
             <View style={styles.actionPillsContainer}>
               <TouchableOpacity
                 style={styles.menuActionPill}
@@ -224,7 +325,7 @@ function FloatingAssistiveDock() {
                   <Ionicons name="chatbubble-ellipses" size={20} color="#FFFFFF" />
                 </View>
                 <Text style={styles.pillLabel}>Group Chat</Text>
-                <Text style={styles.pillSub}>3 unread</Text>
+                <Text style={styles.pillSub}>{messages.length} msgs</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -243,7 +344,7 @@ function FloatingAssistiveDock() {
         </TouchableOpacity>
       </Modal>
 
-      {/* 2. WhatsApp-Style Group Chat Screen */}
+      {/* 2. Group Chat Screen */}
       <Modal
         visible={activeModal === 'chat'}
         animationType="slide"
@@ -286,26 +387,128 @@ function FloatingAssistiveDock() {
               {messages.map((item) => (
                 <View
                   key={item.id}
-                  style={[styles.messageBubble, item.isMe ? styles.myBubble : styles.theirBubble]}
+                  style={[
+                    styles.messageWrapper,
+                    item.isMe ? styles.messageWrapperMe : styles.messageWrapperThem,
+                  ]}
                 >
-                  {!item.isMe && <Text style={styles.senderLabel}>{item.sender}</Text>}
-                  <Text style={[styles.bubbleText, item.isMe && styles.myBubbleText]}>
-                    {item.text}
-                  </Text>
-                  <View style={styles.bubbleFooter}>
-                    <Text style={[styles.bubbleTime, item.isMe && styles.myBubbleTime]}>
-                      {item.time}
-                    </Text>
-                    {item.isMe && <Ionicons name="checkmark-done" size={14} color="#34B7F1" />}
-                  </View>
+                  {item.type === 'beacon' ? (
+                    <View style={styles.chatBeaconCard}>
+                      <View style={styles.beaconHeaderRow}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                          <Ionicons name="radio" size={16} color="#B45309" />
+                          <Text style={styles.beaconHeaderTag}>MEETUP BEACON</Text>
+                        </View>
+                        <View style={styles.activePill}>
+                          <Text style={styles.activePillText}>ACTIVE</Text>
+                        </View>
+                      </View>
+
+                      {/* Optional Attached Landmark Photo */}
+                      {item.beacon?.photoUri && (
+                        <Image source={{ uri: item.beacon.photoUri }} style={styles.beaconCardPhoto} />
+                      )}
+
+                      <View style={styles.beaconLocationBox}>
+                        <Text style={styles.beaconLocationLabel}>MEETUP POINT</Text>
+                        <Text style={styles.beaconLocationTitle}>⛩️ {item.beacon?.location}</Text>
+                        <Text style={styles.beaconLocationSub}>Target Time: {item.beacon?.meetupTime}</Text>
+                      </View>
+
+                      <View style={styles.countdownPillBox}>
+                        <Text style={styles.countdownTitle}>REGROUP TIME</Text>
+                        <LiveBeaconTimer initialMinutes={item.beacon?.countdownMinutes || 15} />
+                      </View>
+
+                      <TouchableOpacity
+                        style={styles.radarActionBtn}
+                        onPress={() => setActiveModal('radar')}
+                      >
+                        <Ionicons name="navigate" size={14} color="#FFFFFF" />
+                        <Text style={styles.radarActionBtnText}>Open Live Radar Proximity</Text>
+                      </TouchableOpacity>
+
+                      <View style={styles.bubbleFooter}>
+                        <Text style={styles.bubbleTime}>{item.time}</Text>
+                        <Ionicons name="checkmark-done" size={14} color="#34B7F1" />
+                      </View>
+                    </View>
+                  ) : item.type === 'photo' ? (
+                    <View
+                      style={[
+                        styles.messageBubble,
+                        item.isMe ? styles.myBubble : styles.theirBubble,
+                        { padding: 4 },
+                      ]}
+                    >
+                      <Image source={{ uri: item.imageUri }} style={styles.chatImageContent} />
+                      <View style={[styles.bubbleFooter, { paddingHorizontal: 6, paddingBottom: 4 }]}>
+                        <Text style={[styles.bubbleTime, item.isMe && styles.myBubbleTime]}>
+                          {item.time}
+                        </Text>
+                        {item.isMe && <Ionicons name="checkmark-done" size={14} color="#34B7F1" />}
+                      </View>
+                    </View>
+                  ) : (
+                    <View
+                      style={[
+                        styles.messageBubble,
+                        item.isMe ? styles.myBubble : styles.theirBubble,
+                      ]}
+                    >
+                      {!item.isMe && <Text style={styles.senderLabel}>{item.sender}</Text>}
+                      <Text style={[styles.bubbleText, item.isMe && styles.myBubbleText]}>
+                        {item.text}
+                      </Text>
+                      <View style={styles.bubbleFooter}>
+                        <Text style={[styles.bubbleTime, item.isMe && styles.myBubbleTime]}>
+                          {item.time}
+                        </Text>
+                        {item.isMe && <Ionicons name="checkmark-done" size={14} color="#34B7F1" />}
+                      </View>
+                    </View>
+                  )}
                 </View>
               ))}
             </ScrollView>
 
+            {/* WhatsApp '+' Tray: Beacon & Photos */}
+            {showAttachmentMenu && (
+              <View style={styles.attachmentSheet}>
+                <TouchableOpacity
+                  style={styles.trayButton}
+                  onPress={() => {
+                    setShowAttachmentMenu(false);
+                    setShowBeaconDrawer(true);
+                  }}
+                >
+                  <View style={[styles.trayIconBg, { backgroundColor: '#FEF3C7' }]}>
+                    <Ionicons name="radio" size={22} color="#D97706" />
+                  </View>
+                  <Text style={styles.trayLabel}>Beacon</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity style={styles.trayButton} onPress={handleSendPhoto}>
+                  <View style={[styles.trayIconBg, { backgroundColor: '#E0F2FE' }]}>
+                    <Ionicons name="image" size={22} color="#0284C7" />
+                  </View>
+                  <Text style={styles.trayLabel}>Photos</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {/* Bottom Input Bar */}
             <View style={styles.inputContainer}>
-              <TouchableOpacity style={styles.mediaBtn}>
-                <Ionicons name="add" size={24} color="#007AFF" />
+              <TouchableOpacity
+                style={styles.mediaBtn}
+                onPress={() => {
+                  setShowBeaconDrawer(false);
+                  setShowAttachmentMenu((prev) => !prev);
+                }}
+              >
+                <Ionicons name={showAttachmentMenu ? 'close' : 'add'} size={24} color="#007AFF" />
               </TouchableOpacity>
+
               <TextInput
                 style={styles.chatTextInput}
                 placeholder="Message..."
@@ -313,11 +516,88 @@ function FloatingAssistiveDock() {
                 value={inputText}
                 onChangeText={setInputText}
               />
+
               <TouchableOpacity onPress={handleSendMessage} style={styles.sendButton}>
                 <Ionicons name="arrow-up" size={18} color="#FFFFFF" />
               </TouchableOpacity>
             </View>
           </Animated.View>
+
+          {/* INLINE BEACON SETUP DRAWER (Allows Attaching / Snapping Landmark Photo) */}
+          {showBeaconDrawer && (
+            <View style={styles.inlineDrawerBackdrop}>
+              <View style={styles.beaconDrawerSheet}>
+                <View style={styles.sheetHandle} />
+
+                <View style={styles.modalHeaderRow}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Ionicons name="radio" size={18} color="#D97706" />
+                    <Text style={styles.modalTitle}>Set Group Meetup Beacon</Text>
+                  </View>
+                  <TouchableOpacity onPress={() => setShowBeaconDrawer(false)} style={styles.circleCloseBtn}>
+                    <Ionicons name="close" size={18} color="#4B5563" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* SNAP / ATTACH PHOTO TO BEACON */}
+                <Text style={styles.fieldLabel}>LANDMARK PHOTO (OPTIONAL)</Text>
+                {beaconPhotoUri ? (
+                  <View style={styles.attachedPhotoPreviewBox}>
+                    <Image source={{ uri: beaconPhotoUri }} style={styles.attachedPhotoImg} />
+                    <TouchableOpacity
+                      style={styles.removePhotoBadge}
+                      onPress={() => setBeaconPhotoUri(undefined)}
+                    >
+                      <Ionicons name="close" size={14} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <TouchableOpacity style={styles.snapPhotoBtn} onPress={handleSnapBeaconPhoto}>
+                    <Ionicons name="camera" size={16} color="#0D9488" />
+                    <Text style={styles.snapPhotoBtnText}>Snap / Attach Landmark Photo</Text>
+                  </TouchableOpacity>
+                )}
+
+                <Text style={styles.fieldLabel}>MEETUP POINT / DESTINATION</Text>
+                <TextInput
+                  value={beaconLocation}
+                  onChangeText={setBeaconLocation}
+                  placeholder="e.g. Nishiki Market Entrance, Main Gate..."
+                  placeholderTextColor="#9CA3AF"
+                  style={styles.modalInput}
+                />
+
+                <Text style={styles.fieldLabel}>COUNTDOWN TIMER (MINUTES)</Text>
+                <View style={styles.presetMinutesRow}>
+                  {[10, 15, 30, 45].map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      onPress={() => setBeaconDuration(m)}
+                      style={[styles.minutePill, beaconDuration === m && styles.minutePillActive]}
+                    >
+                      <Text style={[styles.minuteText, beaconDuration === m && styles.minuteTextActive]}>
+                        {m}m
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={styles.fieldLabel}>TARGET TIME</Text>
+                <TextInput
+                  value={beaconTargetTime}
+                  onChangeText={setBeaconTargetTime}
+                  placeholder="e.g. 01:45 PM"
+                  placeholderTextColor="#9CA3AF"
+                  style={styles.modalInput}
+                />
+
+                <TouchableOpacity style={styles.broadcastBeaconBtn} onPress={handleSendBeaconToChat}>
+                  <Ionicons name="radio" size={16} color="#FFFFFF" />
+                  <Text style={styles.broadcastBeaconBtnText}>Send Meetup Beacon to Chat 📡</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
         </SafeAreaView>
       </Modal>
 
@@ -330,7 +610,7 @@ function FloatingAssistiveDock() {
       >
         <SafeAreaView style={styles.sheetContainer}>
           <View style={styles.chatHeader}>
-            <TouchableOpacity onPress={() => setActiveModal('menu')} style={styles.chatBackBtn}>
+            <TouchableOpacity onPress={() => setActiveModal('chat')} style={styles.chatBackBtn}>
               <Ionicons name="chevron-back" size={26} color="#007AFF" />
             </TouchableOpacity>
             <View style={{ flex: 1 }}>
@@ -349,7 +629,7 @@ function FloatingAssistiveDock() {
           <View style={styles.mapCanvas}>
             <Image
               source={{
-                uri: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1000&auto=format&fit=crop&q=80',
+                uri: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1000',
               }}
               style={StyleSheet.absoluteFill}
             />
@@ -675,6 +955,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.light.textSecondary,
   },
+  messageWrapper: {
+    marginBottom: 2,
+  },
+  messageWrapperThem: {
+    alignItems: 'flex-start',
+  },
+  messageWrapperMe: {
+    alignItems: 'flex-end',
+  },
   messageBubble: {
     maxWidth: '78%',
     borderRadius: 16,
@@ -682,12 +971,10 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   theirBubble: {
-    alignSelf: 'flex-start',
     backgroundColor: '#FFFFFF',
     borderBottomLeftRadius: 4,
   },
   myBubble: {
-    alignSelf: 'flex-end',
     backgroundColor: '#E7FFDB',
     borderBottomRightRadius: 4,
   },
@@ -705,6 +992,12 @@ const styles = StyleSheet.create({
   myBubbleText: {
     color: '#000000',
   },
+  chatImageContent: {
+    width: 220,
+    height: 150,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
   bubbleFooter: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -719,6 +1012,137 @@ const styles = StyleSheet.create({
   myBubbleTime: {
     color: 'rgba(0, 0, 0, 0.45)',
   },
+
+  /* In-Chat Beacon Card */
+  chatBeaconCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 14,
+    borderWidth: 1.5,
+    borderColor: '#FDE68A',
+    shadowColor: '#D97706',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 6,
+    elevation: 2,
+    width: 250,
+  },
+  beaconCardPhoto: {
+    width: '100%',
+    height: 120,
+    borderRadius: 12,
+    marginBottom: 10,
+    backgroundColor: '#E2E8F0',
+  },
+  beaconHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  beaconHeaderTag: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#B45309',
+    letterSpacing: 0.5,
+  },
+  activePill: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  activePillText: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#B45309',
+  },
+  beaconLocationBox: {
+    backgroundColor: '#FFFDF5',
+    padding: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
+    marginBottom: 8,
+  },
+  beaconLocationLabel: {
+    fontSize: 8.5,
+    fontWeight: '800',
+    color: '#92400E',
+  },
+  beaconLocationTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#1E293B',
+    marginTop: 2,
+  },
+  beaconLocationSub: {
+    fontSize: 10.5,
+    color: '#D97706',
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  countdownPillBox: {
+    backgroundColor: '#0F172A',
+    borderRadius: 10,
+    paddingVertical: 8,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  countdownTitle: {
+    color: '#94A3B8',
+    fontSize: 8,
+    fontWeight: '800',
+    letterSpacing: 0.8,
+  },
+  countdownDigits: {
+    color: '#FFFFFF',
+    fontSize: 20,
+    fontWeight: '900',
+    marginTop: 1,
+  },
+  radarActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    backgroundColor: '#0D9488',
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  radarActionBtnText: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '700',
+  },
+
+  /* WhatsApp '+' Attachment Tray */
+  attachmentSheet: {
+    flexDirection: 'row',
+    gap: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: Border.hairline,
+    borderColor: Colors.light.border,
+  },
+  trayButton: {
+    alignItems: 'center',
+    gap: 4,
+  },
+  trayIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trayLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#475569',
+  },
+
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -749,6 +1173,149 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+
+  /* Inline Drawer Backdrop & Sheet */
+  inlineDrawerBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    justifyContent: 'flex-end',
+    zIndex: 9999,
+  },
+  beaconDrawerSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 20,
+    paddingBottom: 32,
+  },
+  sheetHandle: {
+    width: 36,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1',
+    alignSelf: 'center',
+    marginBottom: 14,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  circleCloseBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  fieldLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 0.5,
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  snapPhotoBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: '#F0FDFA',
+    borderWidth: 1,
+    borderColor: '#CCFBF1',
+    paddingVertical: 10,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  snapPhotoBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#0D9488',
+  },
+  attachedPhotoPreviewBox: {
+    position: 'relative',
+    height: 90,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 4,
+  },
+  attachedPhotoImg: {
+    width: '100%',
+    height: '100%',
+  },
+  removePhotoBadge: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalInput: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 13,
+    color: '#0F172A',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  presetMinutesRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  minutePill: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+  },
+  minutePillActive: {
+    backgroundColor: '#FEF3C7',
+    borderWidth: 1,
+    borderColor: '#F59E0B',
+  },
+  minuteText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  minuteTextActive: {
+    color: '#B45309',
+  },
+  broadcastBeaconBtn: {
+    backgroundColor: '#0D9488',
+    borderRadius: 14,
+    paddingVertical: 13,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 14,
+  },
+  broadcastBeaconBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+
   mapCanvas: {
     flex: 1,
     backgroundColor: '#1E293B',
