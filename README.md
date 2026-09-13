@@ -11,26 +11,25 @@
 ## 1. Project Overview
 
 ### 1.1 The Problem
-Planning a trip is stressful because travelers must juggle disconnected platforms across booking, budgeting, navigation, and group communication. This fragmentation introduces three critical points of friction:
-* **Coordination Chaos:** Aligning distinct schedules, individual spending limits, and differing travel preferences across a group is notoriously difficult.
-* **Rigid Itineraries:** Most trip plans are saved in static documents or notes that fail to adapt when unexpected delays, closures, or emergencies occur mid-trip.
-* **Fragmented Platforms:** Travelers are forced to assemble a patchwork of single-purpose apps—Wanderlog for visual mapping, TripIt for static reservation storage, Splitwise for shared expenses, and WhatsApp for chat coordination.
-
-When unforeseen disruptions arise, travelers waste critical hours researching alternatives in hotel lobbies, while travel providers face booking abandonment when planning becomes overwhelming.
+Planning a trip is stressful because travelers must juggle disconnected apps for booking, budgeting, and scheduling. As a result, travelers waste time and easily panic when plans change, while businesses lose potential revenue when overwhelmed users abandon the planning process entirely. Existing solutions fall short because they only focus on specific niches. This creates several major pain points:
+* **Coordination Chaos:**  It is extremely difficult to align multiple schedules, budgets, and opinions for group trips.
+* **Rigid Itineraries:** Plans are usually recorded on static documents that cannot adapt to unexpected real-world delays.
+* **Fragmented Platforms:** Travelers are forced to use a messy combination of tools like Wanderlog for maps, TripIt for flights, Splitwise for money, and WhatsApp for communication.
 
 ### 1.2 Target Audience
 Our primary target audience consists of **busy youth and young adults who organize group vacations**.
-* **Core Frustration:** Wasted time switching across multiple platforms to sync opinions, schedules, and debts.
+* **Core Frustration:** Wasted time switching across multiple platforms to align schedules and shared expenses.
 * **Primary Pain Point:** Inflexible, static itineraries that break under flight delays, bad weather, or sudden venue closures.
 
 ### 1.3 Our Solution: TripManager
-**TripManager** is an end-to-end, collaborative travel application engineered to centralize the complete travel lifecycle from discovery and booking to on-the-ground navigation and post-trip scrapbooking.
+TripManager is an end-to-end, collaborative travel platform designed to make planning centralized and dynamic.
+Feeatures:
 
 * **Instant Collaboration:** Group members join via a quick QR code or invite link to synchronize preferences and schedules.
 * **Smart Consensus Planning:** Aggregates individual numerical budgets and lifestyle "vibe tags" to generate balanced itinerary proposals.
 * **All-in-One In-App Booking:** Direct flight, hotel, and transit pass shortlisting and checkout that auto-locks confirmed records into the active route.
 * **Smart Fixes:** Real-time disruption handling that cascades itinerary time shifts and serves instant alternative suggestions when delays strike.
-* **Optical Expense Tracking:** In-app receipt scanning and automated split logic that computes fair shares without manual bookkeeping.
+* **Smart Expense Tracking:** In-app receipt scanning and automated split logic that computes fair shares without manual bookkeeping.
 * **Spatial Synchronization:** "Regroup Beacon" enables opt-in location tracking, designated meetup pins, and synchronized countdown timers during free-exploration windows.
 * **Social Community Hub:** An Instagram-style travel feed where travelers can explore verified guides, clone entire itineraries with one click, and auto-distribute group photos using facial detection.
 
@@ -39,22 +38,25 @@ Our primary target audience consists of **busy youth and young adults who organi
 ## 2. Ideation & Process
 
 ### 2.1 Ideas We Considered
-During our design phase, we evaluated multiple architectural and feature directions:
+Before landing on our final idea, we evaluated several distinct approaches:
 
 | Proposed Feature | Decision | Rationale |
 | :--- | :--- | :--- |
-| **Collaborative Onboarding & Planning** *(Instant Join, Vibe Tags, Exact Budget Buckets, Smart Suggestions)* | **Implement** | Aligns expectations upfront and establishes transparent financial boundaries before scheduling activities. |
+| **Collaborative Onboarding & Planning** *(Instant Join, Vibe Tags, Exact Budget Buckets, Smart Suggestions)* | **Implement** | Streamlines group planning by aligning members’ travel expectations and establishing clear financial boundaries from day one. |
 | **In-Trip Dynamic Assistance** *(Live Map Guidance, Smart Fixes for Delays, Emergency Support)* | **Implement** | Transforms static plans into a reactive travel tool that protects groups against transit delays and sudden venue closures. |
 | **Integrated Group Chat & Polls** | **Implement** | Serves as a centralized channel for decision-making, poll voting, and in-trip discussions without external messaging apps. |
 | **Community Hub** *(Public Explore Feed)* | **Implement** | Allows travelers to discover authentic routes, share blueprints, and clone complete multi-day itineraries in one click. |
-| **Smart Bill Splitting** *(Optical Receipt Scanner & Auto-Split)* | **Implement** *(Mentor Suggestion)* | Eliminates manual calculations, ensures cost transparency, and prevents awkward bill-splitting confrontations. |
-| **Smart Photo Distribution** *(AI Face Recognition Indexing)* | **Implement** *(Mentor Suggestion)* | Automatically tags group members in shared media albums so everyone can retrieve their individual photos without sorting. |
-| **Live Continuous GPS Tracking** | **Refine** *(Shifted to "Regroup Beacon")* | Unrestricted live GPS drains device batteries and can be unreliable in dense indoor spaces. Refined into a targeted gathering beacon with meetup pins and countdown clocks. |
+| **Smart Bill Splitting** *(Receipt Scanner & Auto-Split)* | **Implement** *(Mentor Suggestion)* | Eliminates manual calculations, ensures cost transparency, and prevents awkward bill-splitting confrontations. |
+| **Smart Photo Distribution** *(AI Face Recognition)* | **Implement** *(Mentor Suggestion)* | Provides an automated way for group members to instantly find and download only the photos they are in, saving time and energy. |
+| **Live GPS Tracking** | **Refine** *(Shifted to "Regroup Beacon")* | Live GPS is unreliable in confined areas. We refined this into a Regroup Beacon together with live GPS tracking that notifies all members of a designated time and location to gather after independent exploration. |
 | **Daily Cost Alerts** | **Discarded** | Intrusive budget pings disrupt the vacation experience and do not account for natural day-to-day spending variance. |
 | **In-App Direct Money Transfers** | **Discarded** | Operating direct peer-to-peer fiat payments requires complex banking licenses and KYC compliance; users already rely on trusted e-wallets (Apple Pay, GrabPay, TNG eWallet). |
 
 ### 2.2 Ideation Artifacts
 ```
+* **Problem Tree:**  (<img width="2752" height="1536" alt="Gemini_Generated_Image_z7uptkz7uptkz7up" src="https://github.com/user-attachments/assets/46c50391-c2eb-4932-8099-1a160a4bc6ff" />
+)
+![A brief description of the image](images/screenshot.png)
 [ Problem Tree: Travel Planning Fragmentation ]
 ┌─────────────────────────────────────────────────┐
 │  Result: Group Stress, Abandonment, Chaos        │
