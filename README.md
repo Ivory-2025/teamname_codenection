@@ -53,12 +53,14 @@ Before landing on our final idea, we evaluated several distinct approaches:
 | **In-App Direct Money Transfers** | **Discarded** | Operating direct peer-to-peer fiat payments requires complex banking licenses and KYC compliance; users already rely on trusted e-wallets (Apple Pay, GrabPay, TNG eWallet). |
 
 ### 2.2 Ideation Artifacts
-![* **Problem Tree**  ](<img width="2752" height="1536" alt="Gemini_Generated_Image_z7uptkz7uptkz7up" src="https://github.com/user-attachments/assets/46c50391-c2eb-4932-8099-1a160a4bc6ff" />
-)
-![* **Mindmap**  ](<img width="2752" height="1536" alt="Gemini_Generated_Image_51zqrl51zqrl51zq" src="https://github.com/user-attachments/assets/3cd4ea68-1f1a-414a-8b60-ee2cbe594fe8" />
-)
-![* **User Flow**  ](<img width="2752" height="1536" alt="Gemini_Generated_Image_n9zb7kn9zb7kn9zb" src="https://github.com/user-attachments/assets/a6f3e1be-6887-4287-9f45-f0e936cb5756" />
-)
+### Problem Tree
+![Problem Tree](https://github.com/user-attachments/assets/46c50391-c2eb-4932-8099-1a160a4bc6ff)
+
+### Mindmap
+![Mindmap](https://github.com/user-attachments/assets/3cd4ea68-1f1a-414a-8b60-ee2cbe594fe8)
+
+### User Flow
+![User Flow](https://github.com/user-attachments/assets/a6f3e1be-6887-4287-9f45-f0e936cb5756)
 
 
 ### 2.3 Mentor Consultation
@@ -79,16 +81,23 @@ Before landing on our final idea, we evaluated several distinct approaches:
 **Mobile Prototype Build:** [Expo EAS Build Artifact](https://expo.dev/accounts/aiburi/projects/travel-planner/builds/e0c6bd95-5262-438b-b626-f44c6e37a228)
 
 ### Key Application Screens
-![* **Smart Suggestions and Fixes for itinerary planning**  ](<img width="562" height="595" alt="Screenshot 2026-09-13 231315" src="https://github.com/user-attachments/assets/1df36528-4a0d-4d65-88c6-bad49426797a" />)
-![* **In app flight and hotel-booking**  ](<img width="546" height="547" alt="Screenshot 2026-09-13 231427" src="https://github.com/user-attachments/assets/ffed494d-c708-4b22-bd85-759537e47894" />)
-![* **Smart Photo Distribution**  ](<img width="300" height="605" alt="Screenshot 2026-09-13 231515" src="https://github.com/user-attachments/assets/d254266f-07eb-4fc5-be70-e4487598508f" />
-)
-![* **Smart Bill Splitting**  ](<img width="602" height="618" alt="Screenshot 2026-09-13 231546" src="https://github.com/user-attachments/assets/e4aba459-fb26-43fd-819b-efb8af8e81e5" />
-)
-![* **Live Regroup Beacon**  ](<img width="484" height="508" alt="Screenshot 2026-09-13 231622" src="https://github.com/user-attachments/assets/24f9a881-c083-4d65-aebb-66e3c490ceed" />
-)
-![* **Community Hub**  ](<img width="290" height="632" alt="Screenshot 2026-09-13 231724" src="https://github.com/user-attachments/assets/d24ef1d5-546e-4860-b5b9-e331274508ec" />
-)
+### Smart Suggestions and Fixes for itinerary planning
+![Smart Suggestions and Fixes for itinerary planning](https://github.com/user-attachments/assets/1df36528-4a0d-4d65-88c6-bad49426797a)
+
+### In-app flight and hotel-booking
+![In-app flight and hotel-booking](https://github.com/user-attachments/assets/ffed494d-c708-4b22-bd85-759537e47894)
+
+### Smart Photo Distribution
+![Smart Photo Distribution](https://github.com/user-attachments/assets/d254266f-07eb-4fc5-be70-e4487598508f)
+
+### Smart Bill Splitting
+![Smart Bill Splitting](https://github.com/user-attachments/assets/e4aba459-fb26-43fd-819b-efb8af8e81e5)
+
+### Live Regroup Beacon
+![Live Regroup Beacon](https://github.com/user-attachments/assets/24f9a881-c083-4d65-aebb-66e3c490ceed)
+
+### Community Hub
+![Community Hub](https://github.com/user-attachments/assets/d24ef1d5-546e-4860-b5b9-e331274508ec)
 
 ---
 
