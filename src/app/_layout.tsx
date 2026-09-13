@@ -1,7 +1,9 @@
 import { Border, Colors, Radius, Spacing } from '@/constants/theme';
 import { Ionicons } from '@expo/vector-icons';
 import { BlurView } from 'expo-blur';
+import { useFonts } from 'expo-font';
 import { Tabs } from 'expo-router';
+import * as SplashScreen from 'expo-splash-screen';
 import { useEffect, useRef, useState } from 'react';
 import {
   Alert,
@@ -21,6 +23,8 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
+
+SplashScreen.preventAutoHideAsync();
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BUTTON_SIZE = 54;
@@ -99,7 +103,6 @@ function FloatingAssistiveDock() {
     { id: '3', sender: 'You', text: 'Just walking past the main gate, see you in 3 mins!', time: '1:24 PM', isMe: true, type: 'text' },
   ]);
 
-  // WhatsApp '+' Tray & Beacon Drawer States
   const [showAttachmentMenu, setShowAttachmentMenu] = useState(false);
   const [showBeaconDrawer, setShowBeaconDrawer] = useState(false);
   const [beaconLocation, setBeaconLocation] = useState('Nishiki Market Entrance');
@@ -210,7 +213,6 @@ function FloatingAssistiveDock() {
     }, 100);
   };
 
-  // Broadcast Beacon Card into the chat (with landmark photo if attached)
   const handleSendBeaconToChat = () => {
     if (!beaconLocation.trim()) {
       Alert.alert('Location Required', 'Please enter a designated meetup point.');
@@ -241,7 +243,6 @@ function FloatingAssistiveDock() {
     }, 100);
   };
 
-  // Direct standalone photo sending from tray
   const handleSendPhoto = () => {
     setShowAttachmentMenu(false);
     const photoMsg: ChatMessage = {
@@ -258,7 +259,6 @@ function FloatingAssistiveDock() {
     }, 100);
   };
 
-  // Snap or pick photo inside Beacon
   const handleSnapBeaconPhoto = () => {
     setBeaconPhotoUri('https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=600');
     Alert.alert('Photo Captured 📸', 'Landmark photo attached to your beacon.');
@@ -266,7 +266,6 @@ function FloatingAssistiveDock() {
 
   return (
     <>
-      {/* Draggable Bubble */}
       <Animated.View
         style={[
           styles.draggableBubble,
@@ -283,7 +282,6 @@ function FloatingAssistiveDock() {
         </View>
       </Animated.View>
 
-      {/* 1. Quick Menu Modal */}
       <Modal
         visible={activeModal === 'menu'}
         transparent
@@ -344,7 +342,6 @@ function FloatingAssistiveDock() {
         </TouchableOpacity>
       </Modal>
 
-      {/* 2. Group Chat Screen */}
       <Modal
         visible={activeModal === 'chat'}
         animationType="slide"
@@ -404,7 +401,6 @@ function FloatingAssistiveDock() {
                         </View>
                       </View>
 
-                      {/* Optional Attached Landmark Photo */}
                       {item.beacon?.photoUri && (
                         <Image source={{ uri: item.beacon.photoUri }} style={styles.beaconCardPhoto} />
                       )}
@@ -472,7 +468,6 @@ function FloatingAssistiveDock() {
               ))}
             </ScrollView>
 
-            {/* WhatsApp '+' Tray: Beacon & Photos */}
             {showAttachmentMenu && (
               <View style={styles.attachmentSheet}>
                 <TouchableOpacity
@@ -497,7 +492,6 @@ function FloatingAssistiveDock() {
               </View>
             )}
 
-            {/* Bottom Input Bar */}
             <View style={styles.inputContainer}>
               <TouchableOpacity
                 style={styles.mediaBtn}
@@ -523,7 +517,6 @@ function FloatingAssistiveDock() {
             </View>
           </Animated.View>
 
-          {/* INLINE BEACON SETUP DRAWER (Allows Attaching / Snapping Landmark Photo) */}
           {showBeaconDrawer && (
             <View style={styles.inlineDrawerBackdrop}>
               <View style={styles.beaconDrawerSheet}>
@@ -539,7 +532,6 @@ function FloatingAssistiveDock() {
                   </TouchableOpacity>
                 </View>
 
-                {/* SNAP / ATTACH PHOTO TO BEACON */}
                 <Text style={styles.fieldLabel}>LANDMARK PHOTO (OPTIONAL)</Text>
                 {beaconPhotoUri ? (
                   <View style={styles.attachedPhotoPreviewBox}>
@@ -601,7 +593,6 @@ function FloatingAssistiveDock() {
         </SafeAreaView>
       </Modal>
 
-      {/* 3. Live Radar Screen */}
       <Modal
         visible={activeModal === 'radar'}
         animationType="slide"
@@ -750,6 +741,34 @@ function FixedDock({ state, navigation }: TabBarProps) {
 }
 
 export default function TabLayout() {
+  const [loaded, error] = useFonts({
+    ...Ionicons.font,
+  });
+
+  useEffect(() => {
+    if (loaded || error) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded, error]);
+
+  // Load font stylesheet directly from CDN on web to bypass TTF bundling issues
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const linkId = 'expo-ionicons-web';
+      if (!document.getElementById(linkId)) {
+        const link = document.createElement('link');
+        link.id = linkId;
+        link.rel = 'stylesheet';
+        link.href = 'https://unpkg.com/ionicons@7.1.0/dist/ionicons.css';
+        document.head.appendChild(link);
+      }
+    }
+  }, []);
+
+  if (!loaded && !error) {
+    return null;
+  }
+
   return (
     <Tabs
       tabBar={(props) => <FixedDock {...props} />}
@@ -1012,8 +1031,6 @@ const styles = StyleSheet.create({
   myBubbleTime: {
     color: 'rgba(0, 0, 0, 0.45)',
   },
-
-  /* In-Chat Beacon Card */
   chatBeaconCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
@@ -1115,8 +1132,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
-
-  /* WhatsApp '+' Attachment Tray */
   attachmentSheet: {
     flexDirection: 'row',
     gap: 24,
@@ -1142,7 +1157,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#475569',
   },
-
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1173,8 +1187,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-
-  /* Inline Drawer Backdrop & Sheet */
   inlineDrawerBackdrop: {
     position: 'absolute',
     top: 0,
@@ -1315,7 +1327,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
   },
-
   mapCanvas: {
     flex: 1,
     backgroundColor: '#1E293B',

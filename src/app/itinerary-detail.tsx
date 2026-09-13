@@ -101,8 +101,8 @@ const INITIAL_NOTES: GroupNote[] = [
 const PEOPLE_ALBUMS: PersonAlbum[] = [
   { id: 'm1', name: 'Ivory (You)', avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300' },
   { id: 'm2', name: 'Chin Jie', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=300' },
-  { id: 'm3', name: 'ZhiHeng', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300' },
-  { id: 'm4', name: 'Sarah', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300' },
+  { id: 'm3', name: 'Winny', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=300' },
+  { id: 'm4', name: 'Anne', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=300' },
 ];
 
 const INITIAL_PHOTOS: JournalPhoto[] = [
@@ -376,6 +376,9 @@ export default function ItineraryDetailScreen() {
   const [alignmentSubTab, setAlignmentSubTab] = useState<'preferences' | 'benchmark'>('benchmark');
   const [selectedPlace, setSelectedPlace] = useState<StopItem | null>(null);
 
+  // Smart Fix Modal State
+  const [showSmartFixModal, setShowSmartFixModal] = useState(false);
+
   // Flight & Hotel Voucher Modal States
   const [selectedVoucherType, setSelectedVoucherType] = useState<'flight-departure' | 'hotel-checkin' | 'hotel-checkout' | 'flight-return' | null>(null);
 
@@ -574,6 +577,47 @@ export default function ItineraryDetailScreen() {
               <View style={styles.optimizeBadge}>
                 <Ionicons name="sparkles" size={12} color="#0D9488" />
                 <Text style={styles.optimizeText}>Optimized</Text>
+              </View>
+            </View>
+
+            {/* TRAVEL • TODAY'S TRIP HUB (FROM ARCHITECTURE DIAGRAM) */}
+            <View style={styles.todayTripHubContainer}>
+              <View style={styles.todayTripBadgeRow}>
+                <Text style={styles.todayTripCategoryTag}>TRAVEL</Text>
+              </View>
+
+              <View style={styles.todayTripCard}>
+                <View style={styles.planeIconContainer}>
+                  <Ionicons name="airplane" size={28} color="#0D9488" />
+                </View>
+
+                <Text style={styles.todayTripHeading}>Today's Trip</Text>
+                <Text style={styles.todayTripSub}>Live Map • Directions • Updates</Text>
+
+                {/* Flow Diagram Box: Something Changed? */}
+                <View style={styles.decisionFlowBox}>
+                  <View style={styles.diamondPill}>
+                    <Text style={styles.diamondText}>Something Changed?</Text>
+                  </View>
+
+                  <View style={styles.flowOptionsRow}>
+                    <TouchableOpacity
+                      style={styles.smartFixPill}
+                      activeOpacity={0.85}
+                      onPress={() => setShowSmartFixModal(true)}
+                    >
+                      <Text style={styles.smartFixPillText}>YES ➔ Smart Fix ⚡</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.noChangePill}
+                      activeOpacity={0.85}
+                      onPress={() => Alert.alert('Itinerary Confirmed ✅', 'All spots on Day ' + selectedDay + ' are verified and on schedule.')}
+                    >
+                      <Text style={styles.noChangePillText}>NO ➔ Updated Itinerary</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
               </View>
             </View>
 
@@ -976,7 +1020,7 @@ export default function ItineraryDetailScreen() {
 
             <View style={styles.peopleAlbumBox}>
               <View style={styles.peopleHeaderRow}>
-                <Text style={styles.peopleSubLabel}>SMART FACE RECOGNITION (iOS STYLE)</Text>
+                <Text style={styles.peopleSubLabel}>SMART FACE RECOGNITION </Text>
                 {selectedAlbum && (
                   <TouchableOpacity onPress={() => setSelectedAlbum(null)}>
                     <Text style={styles.clearFilterText}>Show All Photos</Text>
@@ -1041,6 +1085,127 @@ export default function ItineraryDetailScreen() {
           </View>
         )}
       </ScrollView>
+
+      {/* MODAL 1: QR-BASED INVITE MODAL (NEW) */}
+      <Modal
+        visible={showInviteModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowInviteModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.voucherModalSheet}>
+            <View style={styles.sheetHandle} />
+
+            <View style={styles.voucherHeaderRow}>
+              <View>
+                <Text style={styles.voucherMainTitle}>Invite Travelers to Kansai 🍁</Text>
+                <Text style={styles.voucherSubTitle}>Scan QR code or share instant workspace link</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowInviteModal(false)} style={styles.closeCircle}>
+                <Ionicons name="close" size={18} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inviteQrWrapper}>
+              <Ionicons name="qr-code" size={140} color="#111827" />
+              <Text style={styles.inviteQrSubText}>Scan with phone camera to join trip workspace</Text>
+            </View>
+
+            <View style={styles.copyLinkContainer}>
+              <Ionicons name="link-outline" size={16} color="#6B7280" />
+              <Text style={styles.copyLinkUrlText} numberOfLines={1}>
+                app.escape.io/join/kansai-2026
+              </Text>
+              <TouchableOpacity
+                style={styles.copyLinkButton}
+                onPress={() => Alert.alert('Copied 📋', 'Trip workspace link copied to clipboard!')}
+              >
+                <Text style={styles.copyLinkButtonText}>Copy</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.primaryShareBtn} onPress={handleShareInvite}>
+              <Ionicons name="share-social-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.primaryShareBtnText}>Share via WhatsApp / Messages</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL 2: SMART FIX & RE-ROUTING DECISION TREE MODAL (NEW) */}
+      <Modal
+        visible={showSmartFixModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowSmartFixModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.voucherModalSheet}>
+            <View style={styles.sheetHandle} />
+
+            <View style={styles.voucherHeaderRow}>
+              <View>
+                <Text style={styles.voucherMainTitle}>Smart Fix & Live Re-routing ⚡</Text>
+                <Text style={styles.voucherSubTitle}>Real-time delay detection & schedule repair</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowSmartFixModal(false)} style={styles.closeCircle}>
+                <Ionicons name="close" size={18} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.smartFixAlertCard}>
+              <Ionicons name="alert-circle" size={20} color="#DC2626" />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.smartFixAlertTitle}>Kinkaku-ji Closing Conflict Detected</Text>
+                <Text style={styles.smartFixAlertSub}>Scheduled at 06:15 PM, but gates close at 05:00 PM.</Text>
+              </View>
+            </View>
+
+            <Text style={styles.smartFixOptionsLabel}>RECOMMENDED AI REPAIRS</Text>
+
+            <TouchableOpacity
+              style={styles.repairOptionCard}
+              activeOpacity={0.88}
+              onPress={() => {
+                setShowSmartFixModal(false);
+                Alert.alert('Route Repaired ✨', 'Moved Kinkaku-ji to 03:00 PM and adjusted Nishiki Market time.');
+              }}
+            >
+              <View style={styles.repairIconBox}>
+                <Ionicons name="time-outline" size={18} color="#0D9488" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.repairOptionTitle}>Shift Timeline Earlier by 2 Hours</Text>
+                <Text style={styles.repairOptionSub}>Visits Golden Pavilion at 03:30 PM within open hours.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.repairOptionCard}
+              activeOpacity={0.88}
+              onPress={() => {
+                setShowSmartFixModal(false);
+                Alert.alert('Alternative Swapped ⛩️', 'Replaced Kinkaku-ji with Gion Evening Machiya Walk (Open 24h).');
+              }}
+            >
+              <View style={[styles.repairIconBox, { backgroundColor: '#FEF3C7' }]}>
+                <Ionicons name="sparkles" size={18} color="#B45309" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.repairOptionTitle}>Swap to Gion Lantern Walk (Open 24h)</Text>
+                <Text style={styles.repairOptionSub}>Zero clash risk and perfect for 06:15 PM evening stroll.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.doneBtn} onPress={() => setShowSmartFixModal(false)}>
+              <Text style={styles.doneBtnText}>Keep Current Schedule</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* MODAL: DIGITAL PASSES & VOUCHERS (DAY 1 & DAY 5 ONLY) */}
       <Modal
@@ -1466,6 +1631,114 @@ const styles = StyleSheet.create({
   },
   optimizeText: { fontSize: 11, fontWeight: '700', color: '#0D9488' },
 
+  /* TRAVEL • TODAY'S TRIP HUB */
+  todayTripHubContainer: {
+    marginHorizontal: 16,
+    marginBottom: 16,
+    backgroundColor: '#F0FDFA',
+    borderRadius: 22,
+    borderWidth: 1.5,
+    borderColor: '#CCFBF1',
+    padding: 16,
+  },
+  todayTripBadgeRow: {
+    alignSelf: 'center',
+    backgroundColor: '#CCFBF1',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 8,
+  },
+  todayTripCategoryTag: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#0D9488',
+    letterSpacing: 0.8,
+  },
+  todayTripCard: {
+    alignItems: 'center',
+  },
+  planeIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 22,
+    backgroundColor: '#E6FFFA',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#99F6E4',
+    marginVertical: 4,
+  },
+  todayTripHeading: {
+    fontSize: 19,
+    fontWeight: '800',
+    color: '#111827',
+    marginTop: 4,
+  },
+  todayTripSub: {
+    fontSize: 11.5,
+    fontWeight: '600',
+    color: '#4B5563',
+    marginTop: 2,
+  },
+  decisionFlowBox: {
+    width: '100%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 18,
+    padding: 12,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#CCFBF1',
+    alignItems: 'center',
+  },
+  diamondPill: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  diamondText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  flowOptionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    width: '100%',
+  },
+  smartFixPill: {
+    flex: 1,
+    backgroundColor: '#CCFBF1',
+    borderRadius: 12,
+    paddingVertical: 9,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#99F6E4',
+  },
+  smartFixPillText: {
+    fontSize: 10.5,
+    fontWeight: '800',
+    color: '#0D9488',
+  },
+  noChangePill: {
+    flex: 1,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingVertical: 9,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  noChangePillText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: '#475569',
+  },
+
   /* Bookings Column */
   bookingColumnContainer: { paddingHorizontal: 16, marginBottom: 16 },
   columnSectionTitle: { fontSize: 11, fontWeight: '800', color: '#6B7280', letterSpacing: 0.6, marginBottom: 8 },
@@ -1663,4 +1936,121 @@ const styles = StyleSheet.create({
   detailAbout: { fontSize: 11, color: '#4B5563', lineHeight: 16 },
   detailDoneBtn: { backgroundColor: '#111827', paddingVertical: 12, borderRadius: 14, alignItems: 'center', marginTop: 16 },
   detailDoneBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+
+  /* QR-BASED INVITE MODAL STYLES (NEW) */
+  inviteQrWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    paddingVertical: 24,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    marginVertical: 12,
+  },
+  inviteQrSubText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 8,
+  },
+  copyLinkContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginBottom: 12,
+  },
+  copyLinkUrlText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#334155',
+    marginHorizontal: 8,
+  },
+  copyLinkButton: {
+    backgroundColor: '#CCFBF1',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+  },
+  copyLinkButtonText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#0D9488',
+  },
+  primaryShareBtn: {
+    backgroundColor: '#0D9488',
+    borderRadius: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 13,
+  },
+  primaryShareBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#FFFFFF',
+  },
+
+  /* SMART FIX & REPAIR MODAL STYLES (NEW) */
+  smartFixAlertCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1.5,
+    borderColor: '#FECACA',
+    borderRadius: 16,
+    padding: 12,
+    marginBottom: 14,
+  },
+  smartFixAlertTitle: {
+    fontSize: 12.5,
+    fontWeight: '800',
+    color: '#991B1B',
+  },
+  smartFixAlertSub: {
+    fontSize: 11,
+    color: '#B91C1C',
+    marginTop: 1,
+  },
+  smartFixOptionsLabel: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+    letterSpacing: 0.6,
+    marginBottom: 8,
+  },
+  repairOptionCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 12,
+    marginBottom: 10,
+  },
+  repairIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: '#CCFBF1',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  repairOptionTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1E293B',
+  },
+  repairOptionSub: {
+    fontSize: 11,
+    color: '#64748B',
+    marginTop: 2,
+  },
 });
