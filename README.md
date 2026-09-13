@@ -53,12 +53,9 @@ Before landing on our final idea, we evaluated several distinct approaches:
 | **In-App Direct Money Transfers** | **Discarded** | Operating direct peer-to-peer fiat payments requires complex banking licenses and KYC compliance; users already rely on trusted e-wallets (Apple Pay, GrabPay, TNG eWallet). |
 
 ### 2.2 Ideation Artifacts
-![* **Problem Tree**  ](<img width="2752" height="1536" alt="Gemini_Generated_Image_z7uptkz7uptkz7up" src="https://github.com/user-attachments/assets/46c50391-c2eb-4932-8099-1a160a4bc6ff" />
-)
-![* **Mindmap**  ](<img width="2752" height="1536" alt="Gemini_Generated_Image_51zqrl51zqrl51zq" src="https://github.com/user-attachments/assets/3cd4ea68-1f1a-414a-8b60-ee2cbe594fe8" />
-)
-![* **User Flow**  ](<img width="2752" height="1536" alt="Gemini_Generated_Image_n9zb7kn9zb7kn9zb" src="https://github.com/user-attachments/assets/a6f3e1be-6887-4287-9f45-f0e936cb5756" />
-)
+![* **Problem Tree**  ](https://github.com/Ivory-2025/teamname_codenection/blob/main/Problem%20Tree.jpg)
+![* **Mindmap**  ](https://github.com/Ivory-2025/teamname_codenection/blob/main/mindmap.jpg)
+!([User Flow.jpg](https://github.com/Ivory-2025/teamname_codenection/blob/main/User%20Flow.jpg)
 
 
 ### 2.3 Mentor Consultation
