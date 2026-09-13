@@ -3,8 +3,8 @@
 **Team Members:** Chin Jie, Ivory Liong Jin Earn  
 **Problem Statement:** Travel Planner (Lifestyle Track: Planning an Escape)  
 **Live UI Prototype:** [TripManager on Vercel](https://tripmanager-eyc0f88ys-aiburi-s-team.vercel.app/)  
-**Video Presentation:** [Unlisted YouTube Link]  
-**Presentation Slides:** [Canva Pitch Deck](https://canva.link/01rfkue2mepb2tu)  
+**Video Presentation:** [Watch on YouTube](https://youtu.be/L0pFCXQ2Vek)  
+**Presentation Slides:** [Canva Pitch Deck](https://canva.link/01rfkue2mepb2tu)
 
 ---
 
