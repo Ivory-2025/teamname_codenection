@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Image, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, Image, Modal, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
 
 const HOTEL_NIGHTS = 4;
 
@@ -107,23 +108,31 @@ export default function BookingSelectionScreen() {
   const totalPrice = selectedFlight.numericPrice + hotelTotal;
 
   const handleConfirmSelection = () => {
+  const goToItinerary = () => {
+    if (isSolo) {
+      router.push('/itinerary-edit-solo' as any);
+    } else {
+      router.push('/plan-group' as any);
+    }
+  };
+
+  if (Platform.OS === 'web') {
+    // Alert.alert with custom buttons/onPress isn't reliable on web —
+    // navigate directly instead of relying on the native dialog.
+    goToItinerary();
+  } else {
     Alert.alert(
       'Selection Confirmed',
       'Your round-trip flight and hotel stay have been locked into your itinerary. You can review your day-by-day plan before completing payment.',
       [
         {
           text: 'View Itinerary',
-          onPress: () => {
-            if (isSolo) {
-              router.push('/itinerary-edit-solo' as any);
-            } else {
-              router.push('/plan-group' as any);
-            }
-          },
+          onPress: goToItinerary,
         },
       ]
     );
-  };
+  }
+};
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
