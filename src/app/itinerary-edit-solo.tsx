@@ -35,6 +35,8 @@ interface ActivityStop {
   reviews: string;
   cost: string;
   image: string;
+  description?: string;
+  googleReviews?: { user: string; text: string; rating: string }[];
 }
 
 const FLIGHT_OUTBOUND = {
@@ -78,6 +80,31 @@ const HOTEL_DATA = {
   image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?w=600',
 };
 
+const ALTERNATIVE_SPOTS = [
+  {
+    id: 'alt-1',
+    title: 'Gion Hanamikoji Lantern Stroll',
+    category: 'Culture',
+    location: 'Higashiyama Ward, Kyoto',
+    rating: '4.7★',
+    reviews: '28k',
+    cost: 'Free',
+    image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400',
+    description: 'Preserved historic district famous for traditional tea houses and evening lanterns.',
+  },
+  {
+    id: 'alt-2',
+    title: 'Nishiki Market Evening Bites',
+    category: 'Food',
+    location: 'Nakagyo Ward, Kyoto',
+    rating: '4.5★',
+    reviews: '19k',
+    cost: '¥1,200',
+    image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400',
+    description: 'Narrow shopping street lined with over a hundred food stalls and traditional shops.',
+  },
+];
+
 export default function ItineraryEditSoloScreen() {
   const router = useRouter();
   const [selectedDay, setSelectedDay] = useState(1);
@@ -91,25 +118,65 @@ export default function ItineraryEditSoloScreen() {
   const [editingTimeStopId, setEditingTimeStopId] = useState<string | null>(null);
   const [newTimeInput, setNewTimeInput] = useState('');
 
+  // Add Place Modal State
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [newPlaceTitle, setNewPlaceTitle] = useState('');
+  const [newPlaceLocation, setNewPlaceLocation] = useState('');
+  const [newPlaceTime, setNewPlaceTime] = useState('12:00 PM');
+  const [newPlaceCategory, setNewPlaceCategory] = useState('Sightseeing');
+
+  // Review Inspection & Swap Modal States
+  const [selectedReviewStop, setSelectedReviewStop] = useState<ActivityStop | null>(null);
+  const [swapTargetStopId, setSwapTargetStopId] = useState<string | null>(null);
+
   const [stopsByDay, setStopsByDay] = useState<Record<number, ActivityStop[]>>({
     1: [
-      { id: '1', time: '11:45 AM', title: 'Solo Coffee & Matcha Roast', category: 'Cafe', location: 'Nakagyo Ward, Kyoto', rating: '4.6★', reviews: '4.2k', cost: '¥850', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400' },
-      { id: '2', time: '03:30 PM', title: 'Kiyomizu-dera Early Walk', category: 'Sightseeing', location: 'Higashiyama Ward, Kyoto', rating: '4.8★', reviews: '41k', cost: '¥400', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400' },
+      {
+        id: '1',
+        time: '11:45 AM',
+        title: 'Solo Coffee & Matcha Roast',
+        category: 'Cafe',
+        location: 'Nakagyo Ward, Kyoto',
+        rating: '4.6★',
+        reviews: '4.2k',
+        cost: '¥850',
+        image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400',
+        description: 'Specialty pour-over coffee bar serving locally sourced Uji matcha sweets.',
+        googleReviews: [
+          { user: 'Sarah L.', rating: '★★★★★', text: 'Best matcha latte in Kyoto! Very peaceful spot for solo travelers.' },
+          { user: 'Dan K.', rating: '★★★★☆', text: 'Small space, but the hand-dripped roast is perfection.' },
+        ],
+      },
+      {
+        id: '2',
+        time: '03:30 PM',
+        title: 'Kiyomizu-dera Early Walk',
+        category: 'Sightseeing',
+        location: 'Higashiyama Ward, Kyoto',
+        rating: '4.8★',
+        reviews: '41k',
+        cost: '¥400',
+        image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400',
+        description: 'Historic wooden temple offering broad terrace views overlooking the city of Kyoto.',
+        googleReviews: [
+          { user: 'Kenji T.', rating: '★★★★★', text: 'Unbelievable architecture built completely without nails.' },
+        ],
+      },
     ],
     2: [
-      { id: '3', time: '09:00 AM', title: 'Fushimi Inari Torii Trail', category: 'Culture', location: 'Fushimi Ward, Kyoto', rating: '4.9★', reviews: '55k', cost: 'Free', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=400' },
-      { id: '4', time: '02:00 PM', title: 'Philosopher’s Path Walk', category: 'Nature', location: 'Northern Higashiyama', rating: '4.7★', reviews: '14k', cost: 'Free', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400' },
+      { id: '3', time: '09:00 AM', title: 'Fushimi Inari Torii Trail', category: 'Culture', location: 'Fushimi Ward, Kyoto', rating: '4.9★', reviews: '55k', cost: 'Free', image: 'https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=400', description: 'Thousands of vibrant vermilion gates winding up the sacred mountain.' },
+      { id: '4', time: '02:00 PM', title: 'Philosopher’s Path Walk', category: 'Nature', location: 'Northern Higashiyama', rating: '4.7★', reviews: '14k', cost: 'Free', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400', description: 'Stone path beside a tranquil canal lined with hundreds of cherry trees.' },
     ],
     3: [
-      { id: '5', time: '10:00 AM', title: 'Nara Deer Park Feeding', category: 'Wildlife', location: 'Nara Central', rating: '4.7★', reviews: '39k', cost: '¥200', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400' },
-      { id: '6', time: '02:30 PM', title: 'Todai-ji Great Buddha', category: 'World Heritage', location: 'Nara Park', rating: '4.8★', reviews: '34k', cost: '¥600', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400' },
+      { id: '5', time: '10:00 AM', title: 'Nara Deer Park Feeding', category: 'Wildlife', location: 'Nara Central', rating: '4.7★', reviews: '39k', cost: '¥200', image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400', description: 'Expansive park where friendly sacred sika deer bow for crackers.' },
+      { id: '6', time: '02:30 PM', title: 'Todai-ji Great Buddha', category: 'World Heritage', location: 'Nara Park', rating: '4.8★', reviews: '34k', cost: '¥600', image: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=400', description: 'Colossal wooden temple hall sheltering a giant bronze Buddha statue.' },
     ],
     4: [
-      { id: '7', time: '10:30 AM', title: 'Osaka Castle & Moat Stroll', category: 'History', location: 'Chuo Ward, Osaka', rating: '4.5★', reviews: '62k', cost: '¥600', image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400' },
-      { id: '8', time: '05:00 PM', title: 'Dotonbori Street Food Hunt', category: 'Food', location: 'Namba, Osaka', rating: '4.6★', reviews: '74k', cost: '¥1,500', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400' },
+      { id: '7', time: '10:30 AM', title: 'Osaka Castle & Moat Stroll', category: 'History', location: 'Chuo Ward, Osaka', rating: '4.5★', reviews: '62k', cost: '¥600', image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400', description: 'Iconic five-story castle tower surrounded by steep stone walls and moats.' },
+      { id: '8', time: '05:00 PM', title: 'Dotonbori Street Food Hunt', category: 'Food', location: 'Namba, Osaka', rating: '4.6★', reviews: '74k', cost: '¥1,500', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400', description: 'Neon-soaked canal street famous for piping hot takoyaki and gyoza.' },
     ],
     5: [
-      { id: '9', time: '01:00 PM', title: 'Rinku Seaside Outlets', category: 'Shopping', location: 'Rinku Town, Osaka Bay', rating: '4.2★', reviews: '17k', cost: 'Free', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400' },
+      { id: '9', time: '01:00 PM', title: 'Rinku Seaside Outlets', category: 'Shopping', location: 'Rinku Town, Osaka Bay', rating: '4.2★', reviews: '17k', cost: 'Free', image: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400', description: 'Seaside duty-free shopping mall located one train stop before Kansai Airport.' },
     ],
   });
 
@@ -135,6 +202,59 @@ export default function ItineraryEditSoloScreen() {
     }));
     setEditingTimeStopId(null);
     setNewTimeInput('');
+  };
+
+  const handleAddNewPlace = () => {
+    if (!newPlaceTitle.trim()) {
+      Alert.alert('Place Title Required', 'Please provide a name for this stop.');
+      return;
+    }
+    const newStop: ActivityStop = {
+      id: `custom-${Date.now()}`,
+      time: newPlaceTime.trim() || '12:00 PM',
+      title: newPlaceTitle.trim(),
+      category: newPlaceCategory,
+      location: newPlaceLocation.trim() || 'Kyoto Prefecture',
+      rating: '4.8★',
+      reviews: 'Custom Stop',
+      cost: 'Free',
+      image: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400',
+      description: 'Custom activity added to personal itinerary.',
+    };
+
+    setStopsByDay((prev) => ({
+      ...prev,
+      [selectedDay]: [...(prev[selectedDay] || []), newStop],
+    }));
+    setNewPlaceTitle('');
+    setNewPlaceLocation('');
+    setShowAddModal(false);
+  };
+
+  const handleSwapPlaceConfirmed = (alternative: typeof ALTERNATIVE_SPOTS[0]) => {
+    if (!swapTargetStopId) return;
+    setStopsByDay((prev) => {
+      const dayList = prev[selectedDay] || [];
+      const updated = dayList.map((stop) => {
+        if (stop.id === swapTargetStopId) {
+          return {
+            ...stop,
+            title: alternative.title,
+            category: alternative.category,
+            location: alternative.location,
+            rating: alternative.rating,
+            reviews: alternative.reviews,
+            cost: alternative.cost,
+            image: alternative.image,
+            description: alternative.description,
+          };
+        }
+        return stop;
+      });
+      return { ...prev, [selectedDay]: updated };
+    });
+    setSwapTargetStopId(null);
+    Alert.alert('Spot Replaced 🔄', `Successfully swapped with ${alternative.title}.`);
   };
 
   return (
@@ -164,13 +284,12 @@ export default function ItineraryEditSoloScreen() {
               onPress={() => setSelectedDay(d)}
               style={[styles.dayChip, selectedDay === d && styles.dayChipActive]}
             >
-              <Text style={[styles.dayChipText, selectedDay === d && styles.dayChipTextActive]}>
-                Day {d}
-              </Text>
+              <Text style={[styles.dayChipText, selectedDay === d && styles.dayChipTextActive]}>Day {d}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
 
+        {/* DAY 1 ONLY: OUTBOUND FLIGHT PASS & HOTEL CHECK-IN */}
         {selectedDay === 1 && (
           <View style={styles.bookingColumn}>
             <Text style={styles.bookingColumnTitle}>DAY 1 TRANSIT & LODGING (CHECK-IN)</Text>
@@ -234,6 +353,7 @@ export default function ItineraryEditSoloScreen() {
           </View>
         )}
 
+        {/* DAY 5 ONLY: HOTEL CHECK-OUT & RETURN FLIGHT PASS */}
         {selectedDay === 5 && (
           <View style={styles.bookingColumn}>
             <Text style={styles.bookingColumnTitle}>DAY 5 DEPARTURE & LODGING (CHECK-OUT)</Text>
@@ -298,10 +418,16 @@ export default function ItineraryEditSoloScreen() {
         )}
 
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.timelineDayTitle}>Day {selectedDay} Itinerary Plan</Text>
-          <Text style={styles.sectionHint}>Drag cards to re-order • Tap time pill to change time</Text>
-          <Text style={styles.sectionHint}>Drag cards to re-order • Tap the places to see reviews</Text>
-          <Text style={styles.sectionHint}>Drag cards to re-order • Tap the star icon to swap places</Text>
+          <View style={{ flex: 1, paddingRight: 8 }}>
+            <Text style={styles.timelineDayTitle}>Day {selectedDay} Proposed Route</Text>
+            <Text style={styles.sectionHint}>Tap any time badge (e.g. 9:00 AM ✎) to edit visit time</Text>
+            <Text style={styles.sectionHint}>Drag cards to re-order • Tap the places to see reviews</Text>
+            <Text style={styles.sectionHint}>Tap the star icon on a card to swap alternative places</Text>
+          </View>
+          <TouchableOpacity onPress={() => setShowAddModal(true)} style={styles.addStopBtn}>
+            <Ionicons name="add" size={14} color="#FFFFFF" />
+            <Text style={styles.addStopBtnText}> Add Place</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.stopsList}>
@@ -312,6 +438,8 @@ export default function ItineraryEditSoloScreen() {
               index={index}
               totalItems={currentStops.length}
               onSwap={handleSwap}
+              onPressCard={() => setSelectedReviewStop(stop)}
+              onPressSwap={() => setSwapTargetStopId(stop.id)}
               onPressTime={() => {
                 setEditingTimeStopId(stop.id);
                 setNewTimeInput(stop.time);
@@ -331,6 +459,127 @@ export default function ItineraryEditSoloScreen() {
         </TouchableOpacity>
       </ScrollView>
 
+      {/* MODAL: ADD CUSTOM PLACE */}
+      <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Add New Itinerary Stop</Text>
+              <TouchableOpacity onPress={() => setShowAddModal(false)} style={styles.circleCloseBtn}>
+                <Ionicons name="close" size={18} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.fieldLabel}>PLACE TITLE</Text>
+            <TextInput
+              value={newPlaceTitle}
+              onChangeText={setNewPlaceTitle}
+              placeholder="e.g. Tenryu-ji Temple, Blue Bottle Cafe..."
+              style={styles.modalInput}
+            />
+
+            <Text style={styles.fieldLabel}>LOCATION / AREA</Text>
+            <TextInput
+              value={newPlaceLocation}
+              onChangeText={setNewPlaceLocation}
+              placeholder="e.g. Arashiyama, Ukyo Ward, Kyoto"
+              style={styles.modalInput}
+            />
+
+            <Text style={styles.fieldLabel}>SCHEDULED TIME</Text>
+            <TextInput
+              value={newPlaceTime}
+              onChangeText={setNewPlaceTime}
+              placeholder="e.g. 01:30 PM"
+              style={styles.modalInput}
+            />
+
+            <TouchableOpacity style={styles.saveBtn} activeOpacity={0.88} onPress={handleAddNewPlace}>
+              <Text style={styles.saveBtnText}>Add to Day {selectedDay}</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* MODAL: PLACE DETAILS & GOOGLE REVIEWS */}
+      <Modal visible={!!selectedReviewStop} transparent animationType="slide" onRequestClose={() => setSelectedReviewStop(null)}>
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.modalSheet, { maxHeight: '80%' }]}>
+            <View style={styles.sheetHandle} />
+            {selectedReviewStop && (
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.modalHeaderRow}>
+                  <Text style={styles.modalTitle}>{selectedReviewStop.title}</Text>
+                  <TouchableOpacity onPress={() => setSelectedReviewStop(null)} style={styles.circleCloseBtn}>
+                    <Ionicons name="close" size={18} color="#4B5563" />
+                  </TouchableOpacity>
+                </View>
+
+                <Image source={{ uri: selectedReviewStop.image }} style={styles.reviewModalImage} />
+                <Text style={styles.reviewCategoryText}>{selectedReviewStop.category} • {selectedReviewStop.rating} ({selectedReviewStop.reviews})</Text>
+                <Text style={styles.reviewLocationText}>📍 {selectedReviewStop.location}</Text>
+                <Text style={styles.reviewDescriptionText}>{selectedReviewStop.description || 'A highly recommended destination for cultural and scenic exploration.'}</Text>
+
+                <Text style={[styles.fieldLabel, { marginTop: 12 }]}>VISITOR REVIEWS</Text>
+                {(selectedReviewStop.googleReviews || [
+                  { user: 'Elena V.', rating: '★★★★★', text: 'Stunning ambiance. A must-visit on any solo trip!' },
+                  { user: 'Liam P.', rating: '★★★★☆', text: 'Arrive early to beat the tour crowds and enjoy the serenity.' }
+                ]).map((rev, idx) => (
+                  <View key={idx} style={styles.commentBox}>
+                    <View style={styles.commentHeader}>
+                      <Text style={styles.commentUser}>{rev.user}</Text>
+                      <Text style={styles.commentStars}>{rev.rating}</Text>
+                    </View>
+                    <Text style={styles.commentBody}>{rev.text}</Text>
+                  </View>
+                ))}
+
+                <TouchableOpacity style={[styles.saveBtn, { marginTop: 14 }]} onPress={() => setSelectedReviewStop(null)}>
+                  <Text style={styles.saveBtnText}>Close</Text>
+                </TouchableOpacity>
+              </ScrollView>
+            )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL: SWAP ALTERNATIVE SPOTS (STAR ICON TRIGGER) */}
+      <Modal visible={!!swapTargetStopId} transparent animationType="slide" onRequestClose={() => setSwapTargetStopId(null)}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.modalHeaderRow}>
+              <Text style={styles.modalTitle}>Swap with Alternative Spot ⭐</Text>
+              <TouchableOpacity onPress={() => setSwapTargetStopId(null)} style={styles.circleCloseBtn}>
+                <Ionicons name="close" size={18} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={styles.fieldLabel}>SELECT AN AI-CURATED ALTERNATIVE</Text>
+            {ALTERNATIVE_SPOTS.map((alt) => (
+              <TouchableOpacity
+                key={alt.id}
+                style={styles.alternativeCard}
+                activeOpacity={0.88}
+                onPress={() => handleSwapPlaceConfirmed(alt)}
+              >
+                <Image source={{ uri: alt.image }} style={styles.altThumb} />
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={styles.altTitle}>{alt.title}</Text>
+                  <Text style={styles.altSub}>📍 {alt.location}</Text>
+                  <Text style={styles.altMeta}>{alt.rating} ({alt.reviews}) • {alt.cost}</Text>
+                </View>
+                <View style={styles.swapBadge}>
+                  <Text style={styles.swapBadgeText}>Swap</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </Modal>
+
+      {/* MODAL: CHECKOUT REVIEW */}
       <Modal
         visible={showPaymentModal}
         transparent
@@ -397,6 +646,7 @@ export default function ItineraryEditSoloScreen() {
         </View>
       </Modal>
 
+      {/* MODAL: VOUCHER / PASS PREVIEW */}
       <Modal
         visible={!!selectedVoucher}
         transparent
@@ -449,6 +699,7 @@ export default function ItineraryEditSoloScreen() {
         </View>
       </Modal>
 
+      {/* MODAL: EDIT STOP TIME */}
       <Modal
         visible={!!editingTimeStopId}
         transparent
@@ -500,6 +751,8 @@ function InteractiveSoloDragCard({
   index,
   totalItems,
   onSwap,
+  onPressCard,
+  onPressSwap,
   onPressTime,
   setScrollEnabled,
 }: {
@@ -507,6 +760,8 @@ function InteractiveSoloDragCard({
   index: number;
   totalItems: number;
   onSwap: (from: number, to: number) => void;
+  onPressCard: () => void;
+  onPressSwap: () => void;
   onPressTime: () => void;
   setScrollEnabled: (enabled: boolean) => void;
 }) {
@@ -556,11 +811,18 @@ function InteractiveSoloDragCard({
       ]}
       {...panResponder.panHandlers}
     >
-      <View style={styles.stopCard}>
+      <TouchableOpacity activeOpacity={0.9} onPress={onPressCard} style={styles.stopCard}>
         <Image source={{ uri: item.image }} style={styles.stopThumbnail} />
         <View style={styles.stopBody}>
           <View style={styles.stopTopRow}>
-            <TouchableOpacity onPress={onPressTime} style={styles.stopTimeBadge}>
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={(e) => {
+                e.stopPropagation();
+                onPressTime();
+              }}
+              style={styles.stopTimeBadge}
+            >
               <Text style={styles.stopTimeBadgeText}>{item.time} ✎</Text>
             </TouchableOpacity>
             <Text style={styles.stopCategoryText}>{item.category}</Text>
@@ -570,10 +832,21 @@ function InteractiveSoloDragCard({
             📍 {item.location} • <Text style={{ color: '#F59E0B' }}>{item.rating}</Text>
           </Text>
         </View>
-        <View style={styles.dragIndicator}>
-          <Ionicons name="reorder-two-outline" size={20} color="#9CA3AF" />
+        <View style={styles.cardActionsColumn}>
+          <TouchableOpacity
+            style={styles.swapSpotBtn}
+            onPress={(e) => {
+              e.stopPropagation();
+              onPressSwap();
+            }}
+          >
+            <Ionicons name="star" size={16} color="#D97706" />
+          </TouchableOpacity>
+          <View style={styles.dragIndicator}>
+            <Ionicons name="reorder-two-outline" size={20} color="#9CA3AF" />
+          </View>
         </View>
-      </View>
+      </TouchableOpacity>
     </Animated.View>
   );
 }
@@ -676,9 +949,25 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
 
-  sectionHeaderRow: { marginBottom: 10 },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+  },
   timelineDayTitle: { fontSize: 15, fontWeight: '800', color: '#111827' },
-  sectionHint: { fontSize: 10, color: '#9CA3AF', marginTop: 2 },
+  sectionHint: { fontSize: 10, color: '#6B7280', marginTop: 1.5 },
+  addStopBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#0D9488',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+  },
+  addStopBtnText: { fontSize: 11, fontWeight: '700', color: '#FFFFFF' },
+
   stopsList: { gap: 8, marginBottom: 16 },
   stopCardWrapper: { height: CARD_HEIGHT },
   stopCard: {
@@ -706,7 +995,9 @@ const styles = StyleSheet.create({
   stopCategoryText: { fontSize: 9, color: '#6B7280' },
   stopTitle: { fontSize: 13, fontWeight: '700', color: '#111827', marginTop: 2 },
   stopLocation: { fontSize: 10, color: '#6B7280', marginTop: 2 },
-  dragIndicator: { paddingHorizontal: 12 },
+  cardActionsColumn: { alignItems: 'center', paddingRight: 10, gap: 10 },
+  swapSpotBtn: { padding: 4, backgroundColor: '#FEF3C7', borderRadius: 8 },
+  dragIndicator: { paddingHorizontal: 2 },
 
   lockBtn: {
     flexDirection: 'row',
@@ -736,7 +1027,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 14,
   },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#111827', marginBottom: 12 },
+  modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#111827' },
+  circleCloseBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
+  fieldLabel: { fontSize: 10, fontWeight: '800', color: '#6B7280', letterSpacing: 0.5, marginTop: 8, marginBottom: 4 },
+  modalInput: { backgroundColor: '#F9FAFB', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 8 },
+
   checkoutBreakdown: {
     backgroundColor: '#F9FAFB',
     borderRadius: 14,
@@ -794,4 +1090,33 @@ const styles = StyleSheet.create({
   },
   saveBtn: { backgroundColor: '#0D9488', paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
   saveBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+
+  /* Review Modal */
+  reviewModalImage: { width: '100%', height: 160, borderRadius: 14, marginVertical: 8 },
+  reviewCategoryText: { fontSize: 12, fontWeight: '800', color: '#0D9488' },
+  reviewLocationText: { fontSize: 11, color: '#6B7280', marginTop: 2 },
+  reviewDescriptionText: { fontSize: 12, color: '#374151', lineHeight: 18, marginTop: 6 },
+  commentBox: { backgroundColor: '#F9FAFB', borderRadius: 10, padding: 10, marginTop: 6, borderWidth: 1, borderColor: '#E5E7EB' },
+  commentHeader: { flexDirection: 'row', justifyContent: 'space-between' },
+  commentUser: { fontSize: 11, fontWeight: '700', color: '#111827' },
+  commentStars: { fontSize: 10, color: '#F59E0B' },
+  commentBody: { fontSize: 11, color: '#4B5563', marginTop: 3 },
+
+  /* Alternative Spots Modal */
+  alternativeCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginTop: 8,
+  },
+  altThumb: { width: 54, height: 54, borderRadius: 8 },
+  altTitle: { fontSize: 12.5, fontWeight: '700', color: '#111827' },
+  altSub: { fontSize: 10.5, color: '#6B7280' },
+  altMeta: { fontSize: 10, fontWeight: '700', color: '#0D9488', marginTop: 2 },
+  swapBadge: { backgroundColor: '#0D9488', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
+  swapBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
 });

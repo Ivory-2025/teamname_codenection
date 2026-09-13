@@ -531,8 +531,6 @@ export default function PlanGroupScreen() {
               <View style={styles.milestoneTextWrapper}>
                 <Text style={styles.milestoneTitle} numberOfLines={1}>Traders Hotel Kuala Lumpur</Text>
                 <Text style={styles.milestoneSub} numberOfLines={1}>Tap time pill on card to adjust check-in schedule</Text>
-                <Text style={styles.sectionHint}>Drag cards to re-order • Tap the places to see reviews</Text>
-                <Text style={styles.sectionHint}>Drag cards to re-order • Tap the star icon to swap places</Text>
                 <Text style={styles.timelineDayTitle}>Day {selectedDay} Itinerary Plan</Text>
               </View>
             </View>
@@ -594,6 +592,8 @@ export default function PlanGroupScreen() {
           <View style={{ flex: 1, paddingRight: 8 }}>
             <Text style={styles.timelineDayTitle}>Day {selectedDay} Proposed Route</Text>
             <Text style={styles.sectionHint}>Tap any time badge (e.g. 9:00 AM ✎) to edit visit time</Text>
+            <Text style={styles.sectionHint}>Drag cards to re-order • Tap the places to see reviews</Text>
+            <Text style={styles.sectionHint}>Drag cards to re-order • Tap the star icon to swap places</Text>
           </View>
           <TouchableOpacity onPress={() => setShowAddModal(true)} style={styles.addStopBtn}>
             <Ionicons name="add" size={14} color="#FFFFFF" />
