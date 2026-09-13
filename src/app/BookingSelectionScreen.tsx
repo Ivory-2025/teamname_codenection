@@ -108,6 +108,7 @@ export default function BookingSelectionScreen() {
   const totalPrice = selectedFlight.numericPrice + hotelTotal;
 
   const handleConfirmSelection = () => {
+    console.log('CONFIRM BUTTON CLICKED')
   const goToItinerary = () => {
     if (isSolo) {
       router.push('/itinerary-edit-solo' as any);
