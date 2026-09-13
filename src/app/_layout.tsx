@@ -271,7 +271,7 @@ function FloatingAssistiveDock() {
         style={[
           styles.draggableBubble,
           isWeb
-            ? { position: 'fixed' as any, bottom: 90, right: 24 }
+            ? { position: 'fixed' as any, bottom: 92, right: 20, top: 'auto' as any, left: 'auto' as any }
             : { transform: [{ translateX: pan.x }, { translateY: pan.y }] },
         ]}
         {...(isWeb ? {} : panResponder.panHandlers)}
@@ -689,7 +689,7 @@ function FixedDock({ state, navigation }: TabBarProps) {
     <>
       <FloatingAssistiveDock />
 
-      <View pointerEvents="box-none" style={styles.tabBarWrapper}>
+      <View style={styles.tabBarWrapper}>
         <View style={styles.liquidGlassCapsule}>
           <BlurView intensity={95} tint="light" style={StyleSheet.absoluteFill} />
           <View style={styles.liquidGleam} />
@@ -758,7 +758,6 @@ export default function TabLayout() {
     }
   }, [loaded, error]);
 
-  // Load font stylesheet directly from CDN on web to bypass TTF bundling issues
   useEffect(() => {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       const linkId = 'expo-ionicons-web';
@@ -788,6 +787,13 @@ export default function TabLayout() {
       <Tabs.Screen name="plan" />
       <Tabs.Screen name="booking" />
       <Tabs.Screen name="profile" />
+
+      {/* Explicitly hide non-tab stack routes so they navigate properly */}
+      <Tabs.Screen name="itinerary-edit-solo" options={{ href: null }} />
+      <Tabs.Screen name="plan-group" options={{ href: null }} />
+      <Tabs.Screen name="itinerary-detail" options={{ href: null }} />
+      <Tabs.Screen name="expenses" options={{ href: null }} />
+      <Tabs.Screen name="emergency" options={{ href: null }} />
     </Tabs>
   );
 }
@@ -795,10 +801,9 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   draggableBubble: {
     position: 'absolute',
-    top: 0,
-    left: 0,
-    zIndex: 999999,
-    elevation: 999999,
+    width: BUTTON_SIZE,
+    height: BUTTON_SIZE,
+    zIndex: 9999,
   },
   bubbleCore: {
     width: BUTTON_SIZE,
@@ -814,7 +819,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
-    cursor: isWeb ? ('pointer' as any) : undefined,
+    ...(isWeb ? { cursor: 'pointer' as any } : {}),
   },
   radarDot: {
     position: 'absolute',
@@ -1445,6 +1450,7 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     justifyContent: 'center',
+    pointerEvents: 'box-none' as any,
   },
   liquidGlassCapsule: {
     width: 320,
