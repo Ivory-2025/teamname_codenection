@@ -531,6 +531,9 @@ export default function PlanGroupScreen() {
               <View style={styles.milestoneTextWrapper}>
                 <Text style={styles.milestoneTitle} numberOfLines={1}>Traders Hotel Kuala Lumpur</Text>
                 <Text style={styles.milestoneSub} numberOfLines={1}>Tap time pill on card to adjust check-in schedule</Text>
+                <Text style={styles.sectionHint}>Drag cards to re-order • Tap the places to see reviews</Text>
+                <Text style={styles.sectionHint}>Drag cards to re-order • Tap the star icon to swap places</Text>
+                <Text style={styles.timelineDayTitle}>Day {selectedDay} Itinerary Plan</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.timeBadgeMini} onPress={() => setShowTimeConfig(!showTimeConfig)}>

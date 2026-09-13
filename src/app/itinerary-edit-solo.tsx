@@ -2,20 +2,20 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
-    Alert,
-    Animated,
-    Image,
-    KeyboardAvoidingView,
-    Modal,
-    PanResponder,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    UIManager,
-    View,
+  Alert,
+  Animated,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  PanResponder,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -300,6 +300,8 @@ export default function ItineraryEditSoloScreen() {
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.timelineDayTitle}>Day {selectedDay} Itinerary Plan</Text>
           <Text style={styles.sectionHint}>Drag cards to re-order • Tap time pill to change time</Text>
+          <Text style={styles.sectionHint}>Drag cards to re-order • Tap the places to see reviews</Text>
+          <Text style={styles.sectionHint}>Drag cards to re-order • Tap the star icon to swap places</Text>
         </View>
 
         <View style={styles.stopsList}>
