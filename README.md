@@ -126,11 +126,6 @@ Before landing on our final idea, we evaluated several distinct approaches:
 
 ## 5. Technical Architecture & Feasibility
 
-### 5.1 Tech Stack
-Here is the technical architecture section formatted cleanly for your GitHub `README.md`. It uses standardized Markdown elements like headers, bullet points, and blockquotes to make the technical constraints stand out for any developers reading your repository.
-
----
-
 **Frontend**
 * React Native & Expo: Powers the cross-platform mobile application. We utilize Expo for instant UI previews and rapid on-device testing via QR codes/links without needing native build steps.
 * Build Strategy: While prototyping relies on Expo Go, the production environment utilizes EAS (Expo Application Services) Development/Production Builds. This transition is necessary to support the custom native modules required for core features like live maps, background push notifications, and camera/QR scanning.
