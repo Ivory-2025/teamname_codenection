@@ -172,8 +172,10 @@ Before landing on our final idea, we evaluated several distinct approaches:
 * App Distribution: EAS Build operates as our cloud build service, producing the installable Android binaries (APK/AAB). This eliminates the need for local Android Studio/Gradle environment setups on team members' machines.
 
 ### 5.2 System Architecture
-![System architecture diagram ](<img width="2752" height="1536" alt="Gemini_Generated_Image_j41aj8j41aj8j41a" src="https://github.com/user-attachments/assets/e982e4ae-ca73-4fc0-b8e3-0322b8ca32fd" />
-)
+<p align="center">
+  <h3>System Architecture Diagram</h3>
+  <img width="100%" alt="System Architecture Diagram" src="https://github.com/user-attachments/assets/e982e4ae-ca73-4fc0-b8e3-0322b8ca32fd" />
+</p>
 
 ### 5.3 Build Plan & Scope Realism
 
