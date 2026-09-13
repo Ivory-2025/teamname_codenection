@@ -100,6 +100,9 @@ export default function PlanGroupScreen() {
   const [dayEndTime, setDayEndTime] = useState('09:00 PM');
   const [showTimeConfig, setShowTimeConfig] = useState(false);
 
+  // Invite & QR Modal State
+  const [showInviteModal, setShowInviteModal] = useState(false);
+
   // Payment Checkout Modal
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
@@ -351,7 +354,6 @@ export default function PlanGroupScreen() {
     setShowAddModal(false);
   };
 
-  // Direct Time Save Handler
   const handleSaveEditedTime = () => {
     if (!editingTimeStopId || !newTimeInput.trim()) return;
     setTimelineStops((prev) => ({
@@ -446,8 +448,8 @@ export default function PlanGroupScreen() {
           <Text style={styles.topBarTitle}>Group Route Studio</Text>
           <Text style={styles.topBarSub}>4 Collaborators Active • AI Optimized</Text>
         </View>
-        <TouchableOpacity onPress={handleShareInvite} style={styles.inviteSharePill}>
-          <Ionicons name="share-social-outline" size={13} color="#0D9488" />
+        <TouchableOpacity onPress={() => setShowInviteModal(true)} style={styles.inviteSharePill}>
+          <Ionicons name="qr-code-outline" size={13} color="#0D9488" />
           <Text style={styles.inviteSharePillText}>Invite</Text>
         </TouchableOpacity>
       </View>
@@ -645,6 +647,53 @@ export default function PlanGroupScreen() {
         <Ionicons name="sparkles" size={18} color="#FFFFFF" />
         <Text style={styles.floatingAiText}>Ask AI Travel Agent</Text>
       </TouchableOpacity>
+
+      {/* QR-BASED INVITE MODAL SHEET */}
+      <Modal
+        visible={showInviteModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowInviteModal(false)}
+      >
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalSheet}>
+            <View style={styles.sheetHandle} />
+
+            <View style={styles.modalHeaderRow}>
+              <View>
+                <Text style={styles.modalTitle}>Invite Travel Buddies</Text>
+                <Text style={styles.modalSubheading}>Scan QR or share workspace link</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowInviteModal(false)} style={styles.circleCloseBtn}>
+                <Ionicons name="close" size={18} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.qrCardBox}>
+              <Ionicons name="qr-code" size={128} color="#0F172A" />
+              <Text style={styles.qrCardHint}>Scan with mobile camera to join workspace</Text>
+            </View>
+
+            <View style={styles.copyLinkRow}>
+              <Ionicons name="link" size={16} color="#6B7280" />
+              <Text style={styles.copyLinkInput} numberOfLines={1}>
+                app.escape.io/join/kansai-2026
+              </Text>
+              <TouchableOpacity
+                style={styles.copyActionBtn}
+                onPress={() => Alert.alert('Copied 📋', 'Workspace invite link copied to clipboard!')}
+              >
+                <Text style={styles.copyActionText}>Copy</Text>
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity style={styles.primaryShareBtn} onPress={handleShareInvite}>
+              <Ionicons name="share-social-outline" size={16} color="#FFFFFF" />
+              <Text style={styles.primaryShareText}>Share via WhatsApp / Messages</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* EDIT VISIT TIME MODAL WITH PRESETS & CUSTOM INPUT */}
       <Modal visible={!!editingTimeStopId} transparent animationType="slide" onRequestClose={() => setEditingTimeStopId(null)}>
@@ -1060,7 +1109,6 @@ function InteractiveGroupDragCard({
         <Image source={{ uri: item.image }} style={styles.stopThumbnail} />
         <View style={styles.stopBody}>
           <View style={styles.stopTopRow}>
-            {/* Direct Tap on Time Badge to Edit Time */}
             <TouchableOpacity 
               activeOpacity={0.7}
               onPress={(e) => {
@@ -1398,7 +1446,46 @@ const styles = StyleSheet.create({
   sheetHandle: { width: 36, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', alignSelf: 'center', marginBottom: 14 },
   modalHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   modalTitle: { fontSize: 16, fontWeight: '800', color: '#111827', flex: 1, marginRight: 10 },
+  modalSubheading: { fontSize: 11, color: '#6B7280', marginTop: 2 },
   circleCloseBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
+
+  /* QR Modal Card Styles */
+  qrCardBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 18,
+    paddingVertical: 20,
+    marginVertical: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  qrCardHint: { fontSize: 11, color: '#64748B', marginTop: 8 },
+  copyLinkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 12,
+  },
+  copyLinkInput: { flex: 1, fontSize: 12, color: '#334155', marginHorizontal: 8 },
+  copyActionBtn: { backgroundColor: '#CCFBF1', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  copyActionText: { fontSize: 11, fontWeight: '700', color: '#0D9488' },
+  primaryShareBtn: {
+    backgroundColor: '#111827',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 13,
+    borderRadius: 14,
+  },
+  primaryShareText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+
   presetsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 },
   presetBadge: { backgroundColor: '#F3F4F6', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#E5E7EB' },
   presetBadgeActive: { backgroundColor: '#0D9488', borderColor: '#0D9488' },
