@@ -29,6 +29,7 @@ SplashScreen.preventAutoHideAsync();
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const BUTTON_SIZE = 54;
 const PADDING = 16;
+const isWeb = Platform.OS === 'web';
 
 type TabBarProps = {
   state: any;
@@ -269,17 +270,23 @@ function FloatingAssistiveDock() {
       <Animated.View
         style={[
           styles.draggableBubble,
-          { transform: [{ translateX: pan.x }, { translateY: pan.y }] },
+          isWeb
+            ? { position: 'fixed' as any, bottom: 90, right: 24 }
+            : { transform: [{ translateX: pan.x }, { translateY: pan.y }] },
         ]}
-        {...panResponder.panHandlers}
+        {...(isWeb ? {} : panResponder.panHandlers)}
       >
-        <View style={styles.bubbleCore}>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          onPress={() => setActiveModal('menu')}
+          style={styles.bubbleCore}
+        >
           <BlurView intensity={90} tint="dark" style={StyleSheet.absoluteFill} />
           <Ionicons name="chatbubbles" size={22} color="#FFFFFF" />
           <View style={styles.radarDot}>
             <View style={styles.innerLiveDot} />
           </View>
-        </View>
+        </TouchableOpacity>
       </Animated.View>
 
       <Modal
@@ -807,6 +814,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.35,
     shadowRadius: 10,
+    cursor: isWeb ? ('pointer' as any) : undefined,
   },
   radarDot: {
     position: 'absolute',
