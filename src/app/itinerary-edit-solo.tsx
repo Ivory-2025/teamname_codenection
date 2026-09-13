@@ -39,6 +39,12 @@ interface ActivityStop {
   googleReviews?: { user: string; text: string; rating: string }[];
 }
 
+interface ChatMessage {
+  id: string;
+  sender: 'ai' | 'user';
+  text: string;
+}
+
 const FLIGHT_OUTBOUND = {
   airline: 'Batik Air Malaysia',
   flightNo: 'OD612',
@@ -128,6 +134,17 @@ export default function ItineraryEditSoloScreen() {
   // Review Inspection & Swap Modal States
   const [selectedReviewStop, setSelectedReviewStop] = useState<ActivityStop | null>(null);
   const [swapTargetStopId, setSwapTargetStopId] = useState<string | null>(null);
+
+  // AI Travel Agent State
+  const [showAiAdvisor, setShowAiAdvisor] = useState(false);
+  const [advisorInput, setAdvisorInput] = useState('');
+  const [advisorMessages, setAdvisorMessages] = useState<ChatMessage[]>([
+    {
+      id: '1',
+      sender: 'ai',
+      text: 'Hello! I am your Solo AI Copilot. Ask me about crowd pacing, food nearby, or route advice!',
+    },
+  ]);
 
   const [stopsByDay, setStopsByDay] = useState<Record<number, ActivityStop[]>>({
     1: [
@@ -255,6 +272,26 @@ export default function ItineraryEditSoloScreen() {
     });
     setSwapTargetStopId(null);
     Alert.alert('Spot Replaced 🔄', `Successfully swapped with ${alternative.title}.`);
+  };
+
+  const handleSendAdvisorMessage = () => {
+    if (!advisorInput.trim()) return;
+    const userMsg = advisorInput.trim();
+    setAdvisorMessages((prev) => [...prev, { id: Date.now().toString(), sender: 'user', text: userMsg }]);
+    setAdvisorInput('');
+
+    setTimeout(() => {
+      let reply = `For Day ${selectedDay}, keep around 15–20 minutes buffer between stops for transit.`;
+      const q = userMsg.toLowerCase();
+      if (q.includes('crowd') || q.includes('morning') || q.includes('time')) {
+        reply = 'Visiting popular shrines before 08:30 AM allows you to skip tour bus queues completely.';
+      } else if (q.includes('food') || q.includes('cafe') || q.includes('matcha')) {
+        reply = 'Nakagyo and Higashiyama have plenty of authentic small cafes with minimal waiting times.';
+      } else if (q.includes('train') || q.includes('subway') || q.includes('transit')) {
+        reply = 'The Keihan line and subway network will get you directly between all these stops.';
+      }
+      setAdvisorMessages((prev) => [...prev, { id: (Date.now() + 1).toString(), sender: 'ai', text: reply }]);
+    }, 700);
   };
 
   return (
@@ -458,6 +495,76 @@ export default function ItineraryEditSoloScreen() {
           <Text style={styles.lockBtnText}>Finalize Booking & Review Total 💳</Text>
         </TouchableOpacity>
       </ScrollView>
+
+      {/* FLOATING AI TRAVEL AGENT TRIGGER */}
+      <TouchableOpacity
+        style={styles.floatingAiButton}
+        activeOpacity={0.85}
+        onPress={() => setShowAiAdvisor(true)}
+      >
+        <Ionicons name="sparkles" size={18} color="#FFFFFF" />
+        <Text style={styles.floatingAiText}>Ask AI Travel Agent</Text>
+      </TouchableOpacity>
+
+      {/* MODAL: AI TRAVEL AGENT COPILOT */}
+      <Modal
+        visible={showAiAdvisor}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowAiAdvisor(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          style={styles.modalBackdrop}
+        >
+          <View style={styles.agentSheetExpanded}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.agentHeader}>
+              <View style={styles.agentHeaderTitleRow}>
+                <Ionicons name="sparkles" size={18} color="#0D9488" />
+                <Text style={styles.agentHeaderTitle}>AI Travel Agent Copilot</Text>
+              </View>
+              <TouchableOpacity onPress={() => setShowAiAdvisor(false)} style={styles.circleCloseBtn}>
+                <Ionicons name="close" size={18} color="#4B5563" />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.agentChatAreaExpanded} contentContainerStyle={{ gap: 10 }}>
+              {advisorMessages.map((m) => (
+                <View
+                  key={m.id}
+                  style={[
+                    styles.agentBubble,
+                    m.sender === 'user' ? styles.agentBubbleUser : styles.agentBubbleAi,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.agentBubbleText,
+                      m.sender === 'user' && styles.agentBubbleTextUser,
+                    ]}
+                  >
+                    {m.text}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            <View style={styles.agentInputBar}>
+              <TextInput
+                value={advisorInput}
+                onChangeText={setAdvisorInput}
+                placeholder="Ask about crowd pacing, food nearby, travel tips..."
+                placeholderTextColor="#9CA3AF"
+                style={styles.agentInputField}
+              />
+              <TouchableOpacity style={styles.agentSendBtn} onPress={handleSendAdvisorMessage}>
+                <Ionicons name="arrow-up" size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
 
       {/* MODAL: ADD CUSTOM PLACE */}
       <Modal visible={showAddModal} transparent animationType="slide" onRequestClose={() => setShowAddModal(false)}>
@@ -1011,6 +1118,24 @@ const styles = StyleSheet.create({
   },
   lockBtnText: { color: '#FFFFFF', fontSize: 13, fontWeight: '800' },
 
+  floatingAiButton: {
+    position: 'absolute',
+    bottom: 96,
+    right: 18,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#0F172A',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#0D9488',
+    elevation: 6,
+    zIndex: 9999,
+  },
+  floatingAiText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
+
   modalBackdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
   modalSheet: {
     backgroundColor: '#FFFFFF',
@@ -1091,7 +1216,6 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: '#0D9488', paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
   saveBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
 
-  /* Review Modal */
   reviewModalImage: { width: '100%', height: 160, borderRadius: 14, marginVertical: 8 },
   reviewCategoryText: { fontSize: 12, fontWeight: '800', color: '#0D9488' },
   reviewLocationText: { fontSize: 11, color: '#6B7280', marginTop: 2 },
@@ -1102,7 +1226,6 @@ const styles = StyleSheet.create({
   commentStars: { fontSize: 10, color: '#F59E0B' },
   commentBody: { fontSize: 11, color: '#4B5563', marginTop: 3 },
 
-  /* Alternative Spots Modal */
   alternativeCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1119,4 +1242,29 @@ const styles = StyleSheet.create({
   altMeta: { fontSize: 10, fontWeight: '700', color: '#0D9488', marginTop: 2 },
   swapBadge: { backgroundColor: '#0D9488', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 },
   swapBadgeText: { color: '#FFFFFF', fontSize: 11, fontWeight: '700' },
+
+  agentSheetExpanded: { backgroundColor: '#FFFFFF', borderTopLeftRadius: 26, borderTopRightRadius: 26, height: '75%', padding: 18 },
+  agentHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  agentHeaderTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  agentHeaderTitle: { fontSize: 16, fontWeight: '800', color: '#111827' },
+  agentChatAreaExpanded: { flex: 1, marginVertical: 10 },
+  agentBubble: { padding: 12, borderRadius: 14, maxWidth: '85%', marginVertical: 4 },
+  agentBubbleAi: { backgroundColor: '#F0FDFA', alignSelf: 'flex-start', borderWidth: 1, borderColor: '#CCFBF1' },
+  agentBubbleUser: { backgroundColor: '#111827', alignSelf: 'flex-end' },
+  agentBubbleText: { fontSize: 13, color: '#0F766E', lineHeight: 18 },
+  agentBubbleTextUser: { color: '#FFFFFF' },
+  agentInputBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: Platform.OS === 'ios' ? 12 : 4,
+  },
+  agentInputField: { flex: 1, fontSize: 13, color: '#111827' },
+  agentSendBtn: { backgroundColor: '#0D9488', width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
 });
